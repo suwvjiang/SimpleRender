@@ -40,7 +40,7 @@ void RenderDevice::drawcall()
 }
 
 #pragma region Raster Function
-void RenderDevice::setPixel(int x, int y)
+void RenderDevice::drawPixel(int x, int y)
 {
 	SetPixel(screenHDC, x, y, RGB(255, 255, 255));
 }
@@ -65,12 +65,12 @@ void RenderDevice::drawLineDDA(int x0, int y0, int xEnd, int yEnd)
 	xIncrement = dx / steps;
 	yIncrement = dy / steps;
 
-	setPixel(round(x), round(y));
+	drawPixel(round(x), round(y));
 	for (k = 0; k < steps; ++k)
 	{
 		x = x0 + xIncrement * k;
 		y = y0 + yIncrement * k;
-		setPixel(round(x), round(y));
+		drawPixel(round(x), round(y));
 	}
 }
 
@@ -87,7 +87,7 @@ void RenderDevice::drawLineBres(int x0, int y0, int xEnd, int yEnd)
 	stepX = signPlus(xEnd - x0);
 	stepY = signPlus(yEnd - y0);
 
-	setPixel(x, y);
+	drawPixel(x, y);
 	if (dx > dy)
 	{
 		int p = dy2 - dx;
@@ -104,7 +104,7 @@ void RenderDevice::drawLineBres(int x0, int y0, int xEnd, int yEnd)
 				y += stepY;
 				p = p + a;
 			}
-			setPixel(x, y);
+			drawPixel(x, y);
 		}
 	}
 	else
@@ -123,22 +123,52 @@ void RenderDevice::drawLineBres(int x0, int y0, int xEnd, int yEnd)
 				x += stepX;
 				p = p + a;
 			}
-			setPixel(x, y);
+			drawPixel(x, y);
 		}
+	}
+}
+
+void RenderDevice::drawColorPixel(int x, int y, const color& col)
+{
+	SetPixel(screenHDC, x, y, RGB(255* col.r, 255*col.g, 255*col.b));
+}
+
+void RenderDevice::drawColorLine(int x0, int y0, int xEnd, int yEnd, const color& col0, const color& colEnd)
+{
+	float dx = xEnd - x0;
+	float dy = yEnd - y0;
+	int steps, k;
+
+	float xIncrement, yIncrement, x = x0, y = y0;
+
+	if (abs(dx) > abs(dy))
+		steps = abs(dx);
+	else
+		steps = abs(dy);
+
+	xIncrement = dx / steps;
+	yIncrement = dy / steps;
+
+	drawColorPixel(round(x), round(y), col0);
+	for (k = 0; k < steps; ++k)
+	{
+		x = x0 + xIncrement * k;
+		y = y0 + yIncrement * k;
+		drawColorPixel(round(x), round(y), lerpColor(col0, colEnd, float(k)/steps));
 	}
 }
 
 //中点法画圆
 void RenderDevice::circlePlotPoints(int x, int y, screenPt point)
 {
-	setPixel(x + point.getX(), y + point.getY());
-	setPixel(x + point.getX(), y - point.getY());
-	setPixel(x - point.getX(), y + point.getY());
-	setPixel(x - point.getX(), y - point.getY());
-	setPixel(x + point.getY(), y + point.getX());
-	setPixel(x + point.getY(), y - point.getX());
-	setPixel(x - point.getY(), y + point.getX());
-	setPixel(x - point.getY(), y - point.getX());
+	drawPixel(x + point.getX(), y + point.getY());
+	drawPixel(x + point.getX(), y - point.getY());
+	drawPixel(x - point.getX(), y + point.getY());
+	drawPixel(x - point.getX(), y - point.getY());
+	drawPixel(x + point.getY(), y + point.getX());
+	drawPixel(x + point.getY(), y - point.getX());
+	drawPixel(x - point.getY(), y + point.getX());
+	drawPixel(x - point.getY(), y - point.getX());
 }
 void RenderDevice::circleMidPoint(int x, int y, int radius)
 {
@@ -168,10 +198,10 @@ void RenderDevice::circleMidPoint(int x, int y, int radius)
 //中点画椭圆
 void RenderDevice::ellipsePlotPoints(int xCenter, int yCenter, int x, int y)
 {
-	setPixel(xCenter + x, yCenter + y);
-	setPixel(xCenter + x, yCenter - y);
-	setPixel(xCenter - x, yCenter + y);
-	setPixel(xCenter - x, yCenter - y);
+	drawPixel(xCenter + x, yCenter + y);
+	drawPixel(xCenter + x, yCenter - y);
+	drawPixel(xCenter - x, yCenter + y);
+	drawPixel(xCenter - x, yCenter - y);
 }
 void RenderDevice::ellipseMidPoint(int xCenter, int yCenter, int xRadius, int yRadius)
 {
@@ -236,8 +266,8 @@ void RenderDevice::midPointGravity(int vx0, int vy0, int x0, int y0)
 
 	int x = x0, y = y0;
 	int xg = x * gravity;
-	setPixel(x, y);
-	setPixel(xEnd + xEnd - x, y);
+	drawPixel(x, y);
+	drawPixel(xEnd + xEnd - x, y);
 
 	int temp = round((vy0 * vy0 - vxt) / (2 * gravity)) + y0;
 	int p = vxt + 0.125 * gravity - 0.5 * vxy;
@@ -255,8 +285,8 @@ void RenderDevice::midPointGravity(int vx0, int vy0, int x0, int y0)
 			p += vxt;
 		}
 
-		setPixel(x, y);
-		setPixel(xEnd + xEnd - x, y);
+		drawPixel(x, y);
+		drawPixel(xEnd + xEnd - x, y);
 	}
 
 	p = (0.5f + y - y0) * vxt - vxy * (x + 1 - x0) + 0.5f * gravity * (x + 1 - x0) * (x + 1 - x0);
@@ -273,8 +303,8 @@ void RenderDevice::midPointGravity(int vx0, int vy0, int x0, int y0)
 		{
 			p += xg - gx - vxy;
 		}
-		setPixel(x, y);
-		setPixel(xEnd + xEnd - x, y);
+		drawPixel(x, y);
+		drawPixel(xEnd + xEnd - x, y);
 	}
 }
 
@@ -506,7 +536,7 @@ int RenderDevice::checkPtInside(vector2D& p, Boundary edeg, const vector2D& winM
 }
 
 //是否穿过边界
-int RenderDevice::cross(vector2D& p1, vector2D& p2, Boundary edeg, const vector2D& winMin, const vector2D& winMax)
+int RenderDevice::checkCross(vector2D& p1, vector2D& p2, Boundary edeg, const vector2D& winMin, const vector2D& winMax)
 {
 	if (checkPtInside(p1, edeg, winMin, winMax) == checkPtInside(p2, edeg, winMin, winMax))
 		return false;
@@ -557,7 +587,7 @@ void RenderDevice::clipPoint(vector2D& p, Boundary edeg, const vector2D& winMin,
 	}
 	else
 	{
-		if (cross(p, last[edeg], edeg, winMin, winMax))//与边界相交
+		if (checkCross(p, last[edeg], edeg, winMin, winMax))//与边界相交
 		{
 			iPt = intersect(p, last[edeg], edeg, winMin, winMax);
 			if (edeg < Top)
@@ -590,7 +620,7 @@ void RenderDevice::closeClip(const vector2D& winMin, const vector2D& winMax, vec
 	int edge;
 	for (edge = Left; edge <= Top; ++edge)
 	{
-		if (cross(last[edge], *first[edge], Boundary(edge), winMin, winMax))
+		if (checkCross(last[edge], *first[edge], Boundary(edge), winMin, winMax))
 		{
 			pt = intersect(last[edge], *first[edge], Boundary(edge), winMin, winMax);
 			if (edge < Top)
@@ -650,14 +680,20 @@ void RenderDevice::drawClipArea(const vector2D& winMin, const vector2D& winMax)
 	drawLineBres(round(winMax.x), round(winMin.y), round(winMax.x), round(winMax.y));
 }
 
-void RenderDevice::drawTrangleBorder(int nVerts, vector3D* verts)
+void RenderDevice::drawTrangleBorder(int nVerts, vector3D* verts, color* colors)
 {
-	for (int k = 0; k < nVerts; ++k)
+	for (int k = 1; k < nVerts; ++k)
 	{
-		if (k == 0)
-			drawLineBres(round(verts[nVerts - 1].x), round(verts[nVerts - 1].y), round(verts[0].x), round(verts[0].y));
+		if (k == 1)
+		{
+			drawColorLine(round(verts[nVerts - 1].x),	round(verts[nVerts - 1].y),		round(verts[1].x), round(verts[1].y), colors[nVerts - 1], colors[1] );
+			drawColorLine(round(verts[0].x),				round(verts[0].y),				round(verts[1].x), round(verts[1].y), colors[0], colors[1]);
+		}
 		else
-			drawLineBres(round(verts[k - 1].x), round(verts[k - 1].y), round(verts[k].x), round(verts[k].y));
+		{
+			drawColorLine(round(verts[0].x), round(verts[0].y), round(verts[k].x), round(verts[k].y), colors[0], colors[k]);
+			drawColorLine(round(verts[k - 1].x), round(verts[k - 1].y), round(verts[k].x), round(verts[k].y), colors[k - 1], colors[k]);
+		}
 	}
 }
 
@@ -669,12 +705,22 @@ void RenderDevice::matrixDisplay3D()
 
 	angle += PI / Rotate_Speed;
 
-	int nVerts = 3;
-	vector3D p1, p2, p3;
-	p1.setCoords(-100, -100.0, 0);
-	p2.setCoords(0.0, 100.0, 0);
-	p3.setCoords(100.0, 0.0, 0);
-	vector3D verts[3] = { p1, p2, p3 };
+	int nVerts = 5;
+	vector3D p1, p2, p3, p4, p5;
+	p1.setCoords(0, 100.0, 0);
+	p2.setCoords(100, -50.0, 100);
+	p3.setCoords(100.0, -50.0, -100);
+	p4.setCoords(-100.0, -50.0, -100);
+	p5.setCoords(-100.0, -50.0, 100);
+	vector3D verts[5] = { p1, p2, p3, p4, p5 };
+
+	color c1, c2, c3, c4, c5;
+	c1.setColor(1, 0, 0);
+	c2.setColor(0, 1, 0);
+	c3.setColor(1, 1, 0);
+	c4.setColor(0, 0, 1);
+	c5.setColor(1, 0, 1);
+	color colors[5] = { c1, c2, c3, c4, c5 };
 
 	vector3D viewOrigin;
 	viewOrigin.setCoords(0, 0, 0);
@@ -684,7 +730,6 @@ void RenderDevice::matrixDisplay3D()
 	Matrix4x4 matComposite;
 	matrix4x4SetIdentity(matComposite);
 	rotate3D(viewOrigin, viewLookAt, PI, matComposite);
-	transformVerts3D(nVerts, verts, matComposite);
 
 	//identity Camera Matrix
 	vector3D cameraPos, cameraLookAt, cameraUpDir;
@@ -693,21 +738,16 @@ void RenderDevice::matrixDisplay3D()
 	cameraUpDir.setCoords(0, 1, 0);
 	Matrix4x4 cameraMatrix;
 	generateCameraModel(cameraMatrix, cameraPos, cameraLookAt, cameraUpDir);
-
-	matrix4x4SetIdentity(matComposite);
 	matrix4x4PreMultiply(cameraMatrix, matComposite);
-	transformVerts3D(nVerts, verts, matComposite);
 
 	//identity Project Matrix
 	float fov = PI * 3 / 9, aspect = 4 / 3;
 	float zNear = -100, zFar = -300;
 	Matrix4x4 projectMatrix;
 	generateProjectModel(projectMatrix, fov, aspect, zNear, zFar);
-
-	matrix4x4SetIdentity(matComposite);
 	matrix4x4PreMultiply(projectMatrix, matComposite);
+	//mvp transform
 	transformVerts3D(nVerts, verts, matComposite);
-
 	//homoneous transformation
 	int k;
 	for (k = 0; k < nVerts; ++k)
@@ -725,5 +765,5 @@ void RenderDevice::matrixDisplay3D()
 	matrix4x4PreMultiply(screenMatrix, matComposite);
 	transformVerts3D(nVerts, verts, matComposite);
 
-	drawTrangleBorder(nVerts, verts);
+	drawTrangleBorder(nVerts, verts, colors);
 }

@@ -40,6 +40,15 @@ public:
 	}
 };
 
+class color
+{
+public:
+	float r, g, b, a;
+	color() { r = g = b = a = 1; }
+	color(float vr, float vg, float vb, float va = 1) { r = vr; g = vg; b = vb; a = va; }
+	void setColor(float vr, float vg, float vb, float va = 1) { r = vr; g = vg; b = vb; a = va; }
+};
+
 inline int signPlus(const int a) { return (a > 0) - (a < 0); }
 
 inline float lerpPlus(const float v1, const float v2, const float t) { return v1 + (v2 - v1) * t; }
@@ -76,6 +85,15 @@ inline void swapPts(vector2D* p1, vector2D* p2)
 	*p2 = temp;
 }
 
+inline color lerpColor(const color& col0, const color& colEnd, float t)
+{
+	color result;
+	result.r = lerpPlus(col0.r, colEnd.r, t);
+	result.g = lerpPlus(col0.g, colEnd.g, t);
+	result.b = lerpPlus(col0.b, colEnd.b, t);
+	return result;
+}
+
 void matrix3x3SetIdentity(Matrix3x3& matIdent3x3);
 void matrix3x3PreMultiply(Matrix3x3& m1, Matrix3x3& m2);
 void translate2D(float tx, float ty, Matrix3x3& matComposite);
@@ -93,7 +111,6 @@ void transformVerts3D(int nVerts, vector3D* verts, const Matrix4x4& matComposite
 void generateCameraModel(Matrix4x4& cameraMatrix, const vector3D& origin, const vector3D& lookAt, const vector3D& upDir);
 void generateProjectModel(Matrix4x4& proMatrix, float fov, float aspect, float znear, float zfar);
 void generateScreenModel(Matrix4x4& screenMatrix, const vector3D& center, float width, float height);
-
 
 #pragma region 2DClip
 const int winLeftBitCode = 0x1;
