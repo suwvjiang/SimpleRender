@@ -737,25 +737,23 @@ void RenderDevice::matrixDisplay3D()
 	Vec3f c1(1, 0, 0), c2(0, 1, 0), c3(1, 1, 0), c4(0, 0, 1), c5(1, 0, 1);
 	Vec3f colors[5] = { c1, c2, c3, c4, c5 };
 
-
 	Vec4f origin(400, 300, 0);
-	Matrix4x4f matComposite = Matrix4x4RotationX<float>(PI); 
-	matComposite *= Matrix4x4TranslationFromVector<float>(origin);
-	
+	Matrix4x4f modelMatrix = Matrix4x4TranslationFromVector<float>(origin);
+	TransformVectors(nVerts, verts, modelMatrix);
+
 	//identity Camera Matrix
-	Vec4f cameraPos(200 * sin(angle), 200, 200 * cos(angle));
+	Vec4f cameraPos(300 * sin(angle), 0, 300 * cos(angle));
 	cameraPos += origin;
-	Matrix4x4f cameraMatrix = Matrix4x4Camera<float>(cameraPos, origin);
-	matComposite *= cameraMatrix;
+	Matrix4x4f cameraMatrix = Matrix4x4Camera<float>(cameraPos, origin, Vec4f(0, -1, 0));
+	TransformVectors(nVerts, verts, cameraMatrix);
 	
 	//identity Project Matrix
 	float fov = PI * 3 / 9, aspect = 4.0 / 3;
-	float zNear = -100, zFar = -300;
+	float zNear = -100, zFar = -500;
 	Matrix4x4f projectMatrix = Matrix4x4Perspect<float>(fov, aspect, zNear, zFar);
-	matComposite *= projectMatrix;
-	
+	TransformVectors(nVerts, verts, projectMatrix);
+
 	//homoneous transformation
-	TransformVectors(nVerts, verts, matComposite);
 	int k;
 	for (k = 0; k < nVerts; ++k)
 	{

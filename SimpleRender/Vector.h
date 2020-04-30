@@ -480,7 +480,7 @@ struct Vector4
 
 	T lengthSqr() const
 	{
-		return x * x + y * y + z * z + w * w;
+		return x * x + y * y + z * z;
 	}
 
 	T length() const
@@ -490,7 +490,11 @@ struct Vector4
 
 	void normalize()
 	{
-		*this /= length();
+		T len = length();
+		x /= len;
+		y /= len;
+		z /= len;
+		w = 0;
 	}
 
 	void homogeneous()
@@ -508,7 +512,7 @@ struct Vector4
 template<typename U>
 inline U Dot(const Vector4<U>& lhs, const Vector4<U>& rhs)
 {
-	return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z + lhs.w * rhs.w;
+	return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
 
 template<typename U>
@@ -531,7 +535,7 @@ template<typename U>
 inline Vector4<U> Normalize(const Vector4<U>& rhs)
 {
 	U len = rhs.length();
-	return rhs / len;
+	return Vector4<U>(rhs.x /= len, rhs.y /= len, rhs.z /= len, 0);
 }
 
 template<typename T>

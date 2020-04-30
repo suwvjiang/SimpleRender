@@ -281,8 +281,8 @@ Matrix4x4<T> Matrix4x4Camera(const Vector4<T>& eyePos, const Vector4<T>& focusPo
 	mat[1][2] = yDir.z;
 	mat[1][3] = -Dot(eyePos, yDir);
 
-	mat[2][2] = zDir.x;
-	mat[2][2] = zDir.y;
+	mat[2][0] = zDir.x;
+	mat[2][1] = zDir.y;
 	mat[2][2] = zDir.z;
 	mat[2][3] = -Dot(eyePos, zDir);
 
