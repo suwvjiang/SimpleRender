@@ -84,8 +84,8 @@ void RenderDevice::drawLineBres(int x0, int y0, int xEnd, int yEnd)
 
 	x = x0;
 	y = y0;
-	stepX = signPlus(xEnd - x0);
-	stepY = signPlus(yEnd - y0);
+	stepX = sign(xEnd - x0);
+	stepY = sign(yEnd - y0);
 
 	drawPixel(x, y);
 	if (dx > dy)
@@ -128,67 +128,36 @@ void RenderDevice::drawLineBres(int x0, int y0, int xEnd, int yEnd)
 	}
 }
 
-void RenderDevice::drawColorPixel(int x, int y, const color& col)
-{
-	SetPixel(screenHDC, x, y, RGB(255* col.r, 255*col.g, 255*col.b));
-}
-
-void RenderDevice::drawColorLine(int x0, int y0, int xEnd, int yEnd, const color& col0, const color& colEnd)
-{
-	float dx = xEnd - x0;
-	float dy = yEnd - y0;
-	int steps, k;
-
-	float xIncrement, yIncrement, x = x0, y = y0;
-
-	if (abs(dx) > abs(dy))
-		steps = abs(dx);
-	else
-		steps = abs(dy);
-
-	xIncrement = dx / steps;
-	yIncrement = dy / steps;
-
-	drawColorPixel(round(x), round(y), col0);
-	for (k = 0; k < steps; ++k)
-	{
-		x = x0 + xIncrement * k;
-		y = y0 + yIncrement * k;
-		drawColorPixel(round(x), round(y), lerpColor(col0, colEnd, float(k)/steps));
-	}
-}
-
 //中点法画圆
-void RenderDevice::circlePlotPoints(int x, int y, screenPt point)
+void RenderDevice::circlePlotPoints(int x, int y, Vec2i& point)
 {
-	drawPixel(x + point.getX(), y + point.getY());
-	drawPixel(x + point.getX(), y - point.getY());
-	drawPixel(x - point.getX(), y + point.getY());
-	drawPixel(x - point.getX(), y - point.getY());
-	drawPixel(x + point.getY(), y + point.getX());
-	drawPixel(x + point.getY(), y - point.getX());
-	drawPixel(x - point.getY(), y + point.getX());
-	drawPixel(x - point.getY(), y - point.getX());
+	drawPixel(x + point.x, y + point.y);
+	drawPixel(x + point.x, y - point.y);
+	drawPixel(x - point.x, y + point.y);
+	drawPixel(x - point.x, y - point.y);
+	drawPixel(x + point.y, y + point.x);
+	drawPixel(x + point.y, y - point.x);
+	drawPixel(x - point.y, y + point.x);
+	drawPixel(x - point.y, y - point.x);
 }
 void RenderDevice::circleMidPoint(int x, int y, int radius)
 {
-	screenPt circPt;
+	Vec2i circPt(0, radius);
 	int p = 1 - radius;
-	circPt.setCoords(0, radius);
 	circlePlotPoints(x, y, circPt);
 
-	while (circPt.getX() < circPt.getY())
+	while (circPt.x < circPt.y)
 	{
-		circPt.incrementX();
+		circPt.x++;
 
 		if (p < 0)
 		{
-			p += 2 * circPt.getX() + 1;
+			p += 2 * circPt.x + 1;
 		}
 		else
 		{
-			circPt.decrementY();
-			p += 2 * circPt.getX() - 2 * circPt.getY() + 1;
+			circPt.y--;
+			p += 2 * circPt.x - 2 * circPt.y + 1;
 		}
 
 		circlePlotPoints(x, y, circPt);
@@ -399,16 +368,70 @@ void RenderDevice::drawTrangle(int x0, int y0, int x1, int y1, int x2, int y2)
 		drawTopFlatTrangle(x0, y0, xAdd, yAdd, x1, y1);
 	}
 }
+
+//绘制彩点
+void RenderDevice::drawColorPixel(int x, int y, const Vec3f& col)
+{
+	SetPixel(screenHDC, x, y, RGB(255 * col.r, 255 * col.g, 255 * col.b));
+}
+
+//绘制彩线
+void RenderDevice::drawColorLine(int x0, int y0, int xEnd, int yEnd, const Vec3f& col0, const Vec3f& colEnd)
+{
+	float dx = xEnd - x0;
+	float dy = yEnd - y0;
+	int steps, k;
+
+	float xIncrement, yIncrement, x = x0, y = y0;
+
+	if (abs(dx) > abs(dy))
+		steps = abs(dx);
+	else
+		steps = abs(dy);
+
+	xIncrement = dx / steps;
+	yIncrement = dy / steps;
+
+	drawColorPixel(round(x), round(y), col0);
+	for (k = 0; k < steps; ++k)
+	{
+		x = x0 + xIncrement * k;
+		y = y0 + yIncrement * k;
+		drawColorPixel(round(x), round(y), Lerp(col0, colEnd, float(k) / steps));
+	}
+}
+
+void RenderDevice::drawTrangleByHalfSpace(Vec2i& v0, Vec2i& v1, Vec2i& v2, const Vec3f& col0, const Vec3f& col1, const Vec3f& col2)
+{
+	int minX, minY, maxX, maxY;
+	minX = max(min(min(v0.x, v1.x), v2.x), 0);
+	minY = max(min(min(v0.y, v1.y), v2.y), 0);
+	maxX = min(max(max(v0.x, v1.x), v2.x), winWidth);
+	maxY = min(max(max(v0.y, v1.y), v2.y), winHeight);
+
+	Vec2i border0, border1, border2;
+
+	Vec2i pt;
+	for (int y = minY; y < maxY; ++y)
+	{
+		for (int x = minX; x < maxX; ++x)
+		{
+			pt = Vec2i(x, y);
+
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma region 2D Clip
 //线段裁剪
-void RenderDevice::lineClipCohSuth(const vector2D& winMin, const vector2D& winMax, vector2D& p1, vector2D& p2)
+void RenderDevice::lineClipCohSuth(const Vec2i& winMin, const Vec2i& winMax, Vec2i& p1, Vec2i& p2)
 {
 	int code1, code2;
 	int done = false, plotLine = false;
 
-	float m;
+	float m = 1;
 
 	while (!done)
 	{
@@ -430,7 +453,7 @@ void RenderDevice::lineClipCohSuth(const vector2D& winMin, const vector2D& winMa
 			{
 				if (inside(code1))
 				{
-					swapPts(&p1, &p2);
+					Swap(p1, p2);
 					std::swap(code1, code2);
 				}
 
@@ -470,11 +493,11 @@ void RenderDevice::lineClipCohSuth(const vector2D& winMin, const vector2D& winMa
 	}
 
 	if (plotLine)
-		drawLineBres(round(p1.x), round(p1.y), round(p2.x), round(p2.y));
+		drawLineBres(p1.x, p1.y, p2.x, p2.y);
 }
 
 //线段裁剪-梁友栋
-void RenderDevice::lineClipLiangBarsk(const vector2D& winMin, const vector2D& winMax, vector2D& p1, vector2D& p2)
+void RenderDevice::lineClipLiangBarsk(const Vec2i& winMin, const Vec2i& winMax, Vec2i& p1, Vec2i& p2)
 {
 	float uIn = 0, uOut = 1, dx = p2.x - p1.x, dy;
 	if (clipTest(-dx, p1.x - winMin.x, &uIn, &uOut))
@@ -487,11 +510,17 @@ void RenderDevice::lineClipLiangBarsk(const vector2D& winMin, const vector2D& wi
 				if (clipTest(dy, winMax.y - p1.y, &uIn, &uOut))
 				{
 					if (uOut < 1.0)
-						p2.setCoords(p1.x + uOut * dx, p1.y + uOut * dy);
+					{
+						p2.x = round(p1.x + uOut * dx);
+						p2.y = round(p1.y + uOut * dy);
+					}
 					if (uIn > .0)
-						p1.setCoords(p1.x + uIn * dx, p1.y + uIn * dy);
+					{
+						p1.x = round(p1.x + uIn * dx);
+						p1.y = round(p1.y + uIn * dy);
+					}
 
-					drawLineBres(round(p1.x), round(p1.y), round(p2.x), round(p2.y));
+					drawLineBres(p1.x, p1.y, p2.x, p2.y);
 				}
 			}
 		}
@@ -500,12 +529,12 @@ void RenderDevice::lineClipLiangBarsk(const vector2D& winMin, const vector2D& wi
 
 void RenderDevice::testLineClip()
 {
-	vector2D winMin, winMax;
+	Vec2i winMin, winMax;
 	winMin.x = 0; winMin.y = 0;
 	winMax.x = 100; winMax.y = 100;
 	drawClipArea(winMin, winMax);
 
-	vector2D p1, p2;
+	Vec2i p1, p2;
 	p1.x = -50; p1.y = -50;
 	p2.x = 120, p2.y = 120;
 	//lineClipCohSuth(winMin, winMax, p1, p2);
@@ -515,7 +544,7 @@ void RenderDevice::testLineClip()
 const int nClip = 4;
 
 //是否在边界区域内
-int RenderDevice::checkPtInside(vector2D& p, Boundary edeg, const vector2D& winMin, const vector2D& winMax)
+int RenderDevice::checkPtInside(Vec2i& p, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
 {
 	switch (edeg)
 	{
@@ -536,7 +565,7 @@ int RenderDevice::checkPtInside(vector2D& p, Boundary edeg, const vector2D& winM
 }
 
 //是否穿过边界
-int RenderDevice::checkCross(vector2D& p1, vector2D& p2, Boundary edeg, const vector2D& winMin, const vector2D& winMax)
+int RenderDevice::checkCross(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
 {
 	if (checkPtInside(p1, edeg, winMin, winMax) == checkPtInside(p2, edeg, winMin, winMax))
 		return false;
@@ -545,9 +574,9 @@ int RenderDevice::checkCross(vector2D& p1, vector2D& p2, Boundary edeg, const ve
 }
 
 //获取边界交点
-vector2D RenderDevice::intersect(vector2D& p1, vector2D& p2, Boundary edeg, const vector2D& winMin, const vector2D& winMax)
+Vec2i RenderDevice::intersect(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
 {
-	vector2D iPt;
+	Vec2i iPt;
 	float m;
 
 	if (p1.x != p2.x) m = (p2.y - p1.y) / (p2.x - p1.x);
@@ -577,13 +606,12 @@ vector2D RenderDevice::intersect(vector2D& p1, vector2D& p2, Boundary edeg, cons
 	return iPt;
 }
 
-void RenderDevice::clipPoint(vector2D& p, Boundary edeg, const vector2D& winMin, const vector2D& winMax, vector2D* pOut, int* cnt, vector2D* first[], vector2D* last)
+void RenderDevice::clipPoint(Vec2i& p, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax, Vec2i* pOut, int* cnt, Vec2i* first[], Vec2i* last)
 {
-	vector2D iPt;
+	Vec2i iPt;
 	if (!first[edeg])
 	{
-		first[edeg] = new vector2D();
-		first[edeg]->setCoords(p.x, p.y);
+		first[edeg] = new Vec2i(p.x, p.y);
 	}
 	else
 	{
@@ -614,9 +642,9 @@ void RenderDevice::clipPoint(vector2D& p, Boundary edeg, const vector2D& winMin,
 	}
 }
 
-void RenderDevice::closeClip(const vector2D& winMin, const vector2D& winMax, vector2D* pOut, int* cnt, vector2D* first[], vector2D* last)
+void RenderDevice::closeClip(const Vec2i& winMin, const Vec2i& winMax, Vec2i* pOut, int* cnt, Vec2i* first[], Vec2i* last)
 {
-	vector2D pt;
+	Vec2i pt;
 	int edge;
 	for (edge = Left; edge <= Top; ++edge)
 	{
@@ -634,10 +662,10 @@ void RenderDevice::closeClip(const vector2D& winMin, const vector2D& winMax, vec
 	}
 }
 
-int RenderDevice::polygonClipSuthHodg(const vector2D& winMin, const vector2D& winMax, int n, vector2D* pIn, vector2D* pOut)
+int RenderDevice::polygonClipSuthHodg(const Vec2i& winMin, const Vec2i& winMax, int n, Vec2i* pIn, Vec2i* pOut)
 {
-	vector2D* first[nClip] = { 0, 0, 0, 0 };
-	vector2D last[nClip];
+	Vec2i* first[nClip] = { 0, 0, 0, 0 };
+	Vec2i last[nClip];
 	int k, cnt = 0;
 
 	for (k = 0; k < n; ++k)
@@ -649,22 +677,19 @@ int RenderDevice::polygonClipSuthHodg(const vector2D& winMin, const vector2D& wi
 
 void RenderDevice::testPolygonClip()
 {
-	vector2D winMin, winMax;
+	Vec2i winMin, winMax;
 	winMin.x = 0; winMin.y = 0;
 	winMax.x = 100; winMax.y = 100;
 	drawClipArea(winMin, winMax);
 
 	int nVerts = 3;
-	vector2D p1, p2, p3;
-	p1.setCoords(-25.0, 10.0);
-	p2.setCoords(125.0, 10.0);
-	p3.setCoords(50.0, 125.0);
-	vector2D verts[3] = { p1, p2, p3 };
+	Vec2i p1(-25.0, 10.0), p2(125.0, 10.0), p3(50.0, 125.0);
+	Vec2i verts[3] = { p1, p2, p3 };
 
 	//glColor3f(1.0f, 0.0f, 0.0f);
 	//triangle2D(verts, nVerts);
 
-	vector2D outVerts[6];
+	Vec2i outVerts[6];
 	int outCnt = polygonClipSuthHodg(winMin, winMax, nVerts, verts, outVerts);
 	//glColor3f(0.0f, 1.0f, 0.0f);
 	//triangle2D(outVerts, outCnt);
@@ -672,22 +697,22 @@ void RenderDevice::testPolygonClip()
 
 #pragma endregion
 
-void RenderDevice::drawClipArea(const vector2D& winMin, const vector2D& winMax)
+void RenderDevice::drawClipArea(const Vec2i& winMin, const Vec2i& winMax)
 {
-	drawLineBres(round(winMin.x), round(winMin.y), round(winMax.x), round(winMin.y));
-	drawLineBres(round(winMin.x), round(winMin.y), round(winMin.x), round(winMax.y));
-	drawLineBres(round(winMin.x), round(winMax.y), round(winMax.x), round(winMax.y));
-	drawLineBres(round(winMax.x), round(winMin.y), round(winMax.x), round(winMax.y));
+	drawLineBres(winMin.x, winMin.y, winMax.x, winMin.y);
+	drawLineBres(winMin.x, winMin.y, winMin.x, winMax.y);
+	drawLineBres(winMin.x, winMax.y, winMax.x, winMax.y);
+	drawLineBres(winMax.x, winMin.y, winMax.x, winMax.y);
 }
 
-void RenderDevice::drawTrangleBorder(int nVerts, vector3D* verts, color* colors)
+void RenderDevice::drawTrangleBorder(int nVerts, Vec4f* verts, Vec3f* colors)
 {
 	for (int k = 1; k < nVerts; ++k)
 	{
 		if (k == 1)
 		{
-			drawColorLine(round(verts[nVerts - 1].x),	round(verts[nVerts - 1].y),		round(verts[1].x), round(verts[1].y), colors[nVerts - 1], colors[1] );
-			drawColorLine(round(verts[0].x),				round(verts[0].y),				round(verts[1].x), round(verts[1].y), colors[0], colors[1]);
+			drawColorLine(round(verts[0].x), round(verts[0].y), round(verts[1].x), round(verts[1].y), colors[0], colors[1]);
+			drawColorLine(round(verts[nVerts - 1].x), round(verts[nVerts - 1].y), round(verts[1].x), round(verts[1].y), colors[nVerts - 1], colors[1]);
 		}
 		else
 		{
@@ -706,64 +731,42 @@ void RenderDevice::matrixDisplay3D()
 	angle += PI / Rotate_Speed;
 
 	int nVerts = 5;
-	vector3D p1, p2, p3, p4, p5;
-	p1.setCoords(0, 100.0, 0);
-	p2.setCoords(100, -50.0, 100);
-	p3.setCoords(100.0, -50.0, -100);
-	p4.setCoords(-100.0, -50.0, -100);
-	p5.setCoords(-100.0, -50.0, 100);
-	vector3D verts[5] = { p1, p2, p3, p4, p5 };
+	Vec4f p1(0, 100.0, 0), p2(100, -50.0, 100), p3(100.0, -50.0, -100), p4(-100.0, -50.0, -100), p5(-100.0, -50.0, 100);
+	Vec4f verts[5] = { p1, p2, p3, p4, p5 };
 
-	color c1, c2, c3, c4, c5;
-	c1.setColor(1, 0, 0);
-	c2.setColor(0, 1, 0);
-	c3.setColor(1, 1, 0);
-	c4.setColor(0, 0, 1);
-	c5.setColor(1, 0, 1);
-	color colors[5] = { c1, c2, c3, c4, c5 };
+	Vec3f c1(1, 0, 0), c2(0, 1, 0), c3(1, 1, 0), c4(0, 0, 1), c5(1, 0, 1);
+	Vec3f colors[5] = { c1, c2, c3, c4, c5 };
 
-	vector3D viewOrigin;
-	viewOrigin.setCoords(0, 0, 0);
-	vector3D viewLookAt;
-	viewLookAt.setCoords(50, 0, 0);
 
-	Matrix4x4 matComposite;
-	matrix4x4SetIdentity(matComposite);
-	rotate3D(viewOrigin, viewLookAt, PI, matComposite);
-
+	Vec4f origin(400, 300, 0);
+	Matrix4x4f matComposite = Matrix4x4RotationX<float>(PI); 
+	matComposite *= Matrix4x4TranslationFromVector<float>(origin);
+	
 	//identity Camera Matrix
-	vector3D cameraPos, cameraLookAt, cameraUpDir;
-	cameraPos.setCoords(200 * sin(angle), 0, 200 * cos(angle));
-	cameraLookAt.setCoords(0, 0, 0);
-	cameraUpDir.setCoords(0, 1, 0);
-	Matrix4x4 cameraMatrix;
-	generateCameraModel(cameraMatrix, cameraPos, cameraLookAt, cameraUpDir);
-	matrix4x4PreMultiply(cameraMatrix, matComposite);
-
+	Vec4f cameraPos(200 * sin(angle), 200, 200 * cos(angle));
+	cameraPos += origin;
+	Matrix4x4f cameraMatrix = Matrix4x4Camera<float>(cameraPos, origin);
+	matComposite *= cameraMatrix;
+	
 	//identity Project Matrix
-	float fov = PI * 3 / 9, aspect = 4 / 3;
+	float fov = PI * 3 / 9, aspect = 4.0 / 3;
 	float zNear = -100, zFar = -300;
-	Matrix4x4 projectMatrix;
-	generateProjectModel(projectMatrix, fov, aspect, zNear, zFar);
-	matrix4x4PreMultiply(projectMatrix, matComposite);
-	//mvp transform
-	transformVerts3D(nVerts, verts, matComposite);
+	Matrix4x4f projectMatrix = Matrix4x4Perspect<float>(fov, aspect, zNear, zFar);
+	matComposite *= projectMatrix;
+	
 	//homoneous transformation
+	TransformVectors(nVerts, verts, matComposite);
 	int k;
 	for (k = 0; k < nVerts; ++k)
 	{
 		verts[k].homogeneous();
 	}
-
+	
 	//identity Screen Matrix
-	vector3D screenCenter;
-	screenCenter.setCoords(400, 300, 0);
-	Matrix4x4 screenMatrix;
-	generateScreenModel(screenMatrix, screenCenter, 800, 600);
-
-	matrix4x4SetIdentity(matComposite);
-	matrix4x4PreMultiply(screenMatrix, matComposite);
-	transformVerts3D(nVerts, verts, matComposite);
+	Vec4f screenCenter(400, 300, 0);
+	Matrix4x4f screenMatrix = Matrix4x4Screen<float>(screenCenter, winWidth, winHeight);
+	TransformVectors(nVerts, verts, screenMatrix);
+	
 
 	drawTrangleBorder(nVerts, verts, colors);
 }
