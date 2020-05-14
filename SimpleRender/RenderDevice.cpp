@@ -1,4 +1,5 @@
 #include "RenderDevice.h"
+#include "Rasterizer.h"
 
 RenderDevice::RenderDevice()
 {
@@ -15,6 +16,14 @@ void RenderDevice::initRender(HDC hdc, int width, int height)
 	screenHDC = hdc;
 	winWidth = width;
 	winHeight = height;
+	screenCenter.x = winWidth >> 1;
+	screenCenter.y = winHeight >> 1;
+
+	int cnt = winWidth * winHeight;
+	for (int i = 0; i < cnt; ++i)
+	{
+		depthBuffer[i] = -1.0f;
+	}
 }
 
 void RenderDevice::releaseRender()
@@ -35,6 +44,8 @@ void RenderDevice::drawcall()
 	//ellipseMidPoint(200, 200, 100, 50);
 	//midPointGravity(200, 800, 40, 40);
 	//testLineClip();
+	//testPolygonClip();
+	//drawTrangleByHalfSpace(Vec2i(100, 100), Vec2i(300, 100), Vec2i(200, 300), Color_Red, Color_Green, Color_Blue);
 
 	matrixDisplay3D();
 }
@@ -84,8 +95,8 @@ void RenderDevice::drawLineBres(int x0, int y0, int xEnd, int yEnd)
 
 	x = x0;
 	y = y0;
-	stepX = sign(xEnd - x0);
-	stepY = sign(yEnd - y0);
+	stepX = Sign(xEnd - x0);
+	stepY = Sign(yEnd - y0);
 
 	drawPixel(x, y);
 	if (dx > dy)
@@ -369,6 +380,41 @@ void RenderDevice::drawTrangle(int x0, int y0, int x1, int y1, int x2, int y2)
 	}
 }
 
+//绘制边框
+void RenderDevice::drawTrangleBorder(int nVerts, Vec2i* verts)
+{
+	for (int k = 1; k < nVerts; ++k)
+	{
+		if (k == 1)
+		{
+			drawLineBres(verts[0].x, verts[0].y, verts[1].x, verts[1].y);
+			drawLineBres(verts[nVerts - 1].x, verts[nVerts - 1].y, verts[1].x, verts[1].y);
+		}
+		else
+		{
+			drawLineBres(verts[0].x, verts[0].y, verts[k].x, verts[k].y);
+			drawLineBres(verts[k - 1].x, verts[k - 1].y, verts[k].x, verts[k].y);
+		}
+	}
+}
+
+//绘制多边形
+void RenderDevice::drawPolygon(int nVerts, Vec2i* verts)
+{
+	if (nVerts < 3)
+		return;
+
+	Vec2i p0, p1, p2;
+	p0 = verts[0];
+	for (int k = 2; k < nVerts; ++k)
+	{
+		p1 = verts[k - 1];
+		p2 = verts[k];
+
+		drawTrangle(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y);
+	}
+}
+
 //绘制彩点
 void RenderDevice::drawColorPixel(int x, int y, const Vec3f& col)
 {
@@ -401,7 +447,8 @@ void RenderDevice::drawColorLine(int x0, int y0, int xEnd, int yEnd, const Vec3f
 	}
 }
 
-void RenderDevice::drawTrangleByHalfSpace(Vec2i& v0, Vec2i& v1, Vec2i& v2, const Vec3f& col0, const Vec3f& col1, const Vec3f& col2)
+//
+void RenderDevice::drawTrangleByHalfSpace(const Vec2i& v0, const Vec2i& v1, const Vec2i& v2, const Vec3f& col0, const Vec3f& col1, const Vec3f& col2)
 {
 	int minX, minY, maxX, maxY;
 	minX = max(min(min(v0.x, v1.x), v2.x), 0);
@@ -409,19 +456,47 @@ void RenderDevice::drawTrangleByHalfSpace(Vec2i& v0, Vec2i& v1, Vec2i& v2, const
 	maxX = min(max(max(v0.x, v1.x), v2.x), winWidth);
 	maxY = min(max(max(v0.y, v1.y), v2.y), winHeight);
 
-	Vec2i border0, border1, border2;
+	EdgeEquation total(v0, v1, v2);
 
-	Vec2i pt;
+	Vec2i pt(minX, minY);
+	EdgeEquationSet tempY(v0, v1, v2, pt);
+	EdgeEquationSet tempX;
 	for (int y = minY; y < maxY; ++y)
 	{
+		tempX = tempY;
 		for (int x = minX; x < maxX; ++x)
 		{
-			pt = Vec2i(x, y);
+			if (tempX.evaluate())
+			{
+				//注意取点的对边面积
+				float a0 = float(tempX.e0.value) / total.value;
+				float a1 = float(tempX.e1.value) / total.value;
+				float a2 = float(tempX.e2.value) / total.value;
 
+				Vec3f col = col0 * a0 + col1 * a1 + col2 * a2;
+				drawColorPixel(x, y, col);
+			}
+			tempX.incrementX();
 		}
+		tempY.incrementY();
 	}
 }
 
+void RenderDevice::drawColorPolygon(int nVerts, Vec2i* verts, Vec3f* colors)
+{
+	if (nVerts < 3)
+		return;
+
+	Vec2i p0, p1, p2;
+	p0 = verts[0];
+	for (int k = 2; k < nVerts; ++k)
+	{
+		p1 = verts[k - 1];
+		p2 = verts[k];
+
+		drawTrangleByHalfSpace(p0, p1, p2, colors[0], colors[k-1], colors[k]);
+	}
+}
 #pragma endregion
 
 #pragma region 2D Clip
@@ -577,9 +652,9 @@ int RenderDevice::checkCross(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& w
 Vec2i RenderDevice::intersect(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
 {
 	Vec2i iPt;
-	float m;
+	float m = 1.0f;
 
-	if (p1.x != p2.x) m = (p2.y - p1.y) / (p2.x - p1.x);
+	if (p1.x != p2.x) m = float(p2.y - p1.y) / (p2.x - p1.x);
 	switch (edeg)
 	{
 	case Left:
@@ -678,21 +753,19 @@ int RenderDevice::polygonClipSuthHodg(const Vec2i& winMin, const Vec2i& winMax, 
 void RenderDevice::testPolygonClip()
 {
 	Vec2i winMin, winMax;
-	winMin.x = 0; winMin.y = 0;
-	winMax.x = 100; winMax.y = 100;
+	winMin.x = 300; winMin.y = 200;
+	winMax.x = 500; winMax.y = 400;
 	drawClipArea(winMin, winMax);
 
 	int nVerts = 3;
-	Vec2i p1(-25.0, 10.0), p2(125.0, 10.0), p3(50.0, 125.0);
+	Vec2i p1(250.0, 250.0), p2(550.0, 250.0), p3(400.0, 450.0);
 	Vec2i verts[3] = { p1, p2, p3 };
 
-	//glColor3f(1.0f, 0.0f, 0.0f);
-	//triangle2D(verts, nVerts);
+	drawTrangleBorder(nVerts, verts);
 
 	Vec2i outVerts[6];
 	int outCnt = polygonClipSuthHodg(winMin, winMax, nVerts, verts, outVerts);
-	//glColor3f(0.0f, 1.0f, 0.0f);
-	//triangle2D(outVerts, outCnt);
+	drawPolygon(outCnt, outVerts);
 }
 
 #pragma endregion
@@ -705,33 +778,99 @@ void RenderDevice::drawClipArea(const Vec2i& winMin, const Vec2i& winMax)
 	drawLineBres(winMax.x, winMin.y, winMax.x, winMax.y);
 }
 
-void RenderDevice::drawTrangleBorder(int nVerts, Vec4f* verts, Vec3f* colors)
+//转成屏幕坐标
+Vec2i RenderDevice::NDCToScreenSpace(const Vec4f pos, const int& width, const int& height, const Vec2i& center)
 {
-	for (int k = 1; k < nVerts; ++k)
-	{
-		if (k == 1)
-		{
-			drawColorLine(round(verts[0].x), round(verts[0].y), round(verts[1].x), round(verts[1].y), colors[0], colors[1]);
-			drawColorLine(round(verts[nVerts - 1].x), round(verts[nVerts - 1].y), round(verts[1].x), round(verts[1].y), colors[nVerts - 1], colors[1]);
-		}
-		else
-		{
-			drawColorLine(round(verts[0].x), round(verts[0].y), round(verts[k].x), round(verts[k].y), colors[0], colors[k]);
-			drawColorLine(round(verts[k - 1].x), round(verts[k - 1].y), round(verts[k].x), round(verts[k].y), colors[k - 1], colors[k]);
-		}
-	}
+	Vec2i screenPos;
+	screenPos.x = pos.x / pos.w * width + center.x;
+	screenPos.y = pos.y / pos.w * height + center.y;
+	return screenPos;
 }
 
-const static float Rotate_Speed = 1800.0;
+//
+void RenderDevice::rasterizeTrangle(const Vec4f& v0, const Vec4f& v1, const Vec4f& v2, const Vec3f& col0, const Vec3f& col1, const Vec3f& col2)
+{
+	float inv_camera_z[3];
+	inv_camera_z[0] = 1 / v0.w;
+	inv_camera_z[1] = 1 / v1.w;
+	inv_camera_z[2] = 1 / v2.w;
+
+	Vec2i p0, p1, p2, p;
+	p0 = NDCToScreenSpace(v0, winWidth, winHeight, screenCenter);
+	p1 = NDCToScreenSpace(v1, winWidth, winHeight, screenCenter);
+	p2 = NDCToScreenSpace(v2, winWidth, winHeight, screenCenter);
+
+	drawLineBres(p0.x, p0.y, p1.x, p1.y);
+	drawLineBres(p0.x, p0.y, p2.x, p2.y);
+	drawLineBres(p1.x, p1.y, p2.x, p2.y);
+
+	int minX, minY, maxX, maxY;
+	minX = max(min(min(p0.x, p1.x), p2.x), 0);
+	minY = max(min(min(p0.y, p1.y), p2.y), 0);
+	maxX = min(max(max(p0.x, p1.x), p2.x), winWidth);
+	maxY = min(max(max(p0.y, p1.y), p2.y), winHeight);
+	if (minX > maxX)
+		return;
+	if (minY > maxY)
+		return;
+	
+	EdgeEquation area(p0, p1, p2);
+	p.x = minX;
+	p.y = minY;
+	EdgeEquationSet tempY(p0, p1, p2, p);
+	EdgeEquationSet tempX;
+
+	int i, j, index;
+	float z0 = v0.z * inv_camera_z[0], z1 = v1.z * inv_camera_z[1], z2 = v2.z* inv_camera_z[2];
+	z0 = z0 * 0.5 + 0.5;
+	z1 = z1 * 0.5 + 0.5;
+	z2 = z2 * 0.5 + 0.5;
+	float param0, param1, param2, depth;
+	for (j = minY; j < maxY; ++j)
+	{
+		tempX = tempY;
+		for (i = minX; i < maxX; ++i)
+		{
+			index = j * winWidth + i;
+			if (tempX.evaluate())
+			{
+				param0 = float(tempX.e0.value) / area.value;
+				param1 = float(tempX.e1.value) / area.value;
+				param2 = float(tempX.e2.value) / area.value;
+
+				depth = 1/(param0 / z0 + param1 / z1 + param2 / z2);
+				Vec3f col = col0 * param0 + col1 * param1 + col2 * param2;
+				if (depth < depthBuffer[index])
+				{
+					depthBuffer[index] = depth;
+					drawColorPixel(i, j, col);
+				}
+				else
+					std::cout << "ztest failed" << std::endl;
+			}
+
+			tempX.incrementX();
+		}
+
+		tempY.incrementY();
+	}
+
+}
+
+const static float Rotate_Speed = 360.0;
 void RenderDevice::matrixDisplay3D()
 {
+	int cnt = winWidth * winHeight;
+	for (int i = 0; i < cnt; ++i)
+		depthBuffer[i] = 1.0f;
+
 	drawLineBres(0, 300, 800, 300);
 	drawLineBres(400, 0, 400, 600);
 
 	angle += PI / Rotate_Speed;
 
 	int nVerts = 5;
-	Vec4f p1(0, 100.0, 0), p2(100, -50.0, 100), p3(100.0, -50.0, -100), p4(-100.0, -50.0, -100), p5(-100.0, -50.0, 100);
+	Vec4f p1(0, -50.0, 0), p2(0, 50.0, 100), p3(100.0, 50.0, 0), p4(.0, 50.0, -100.0), p5(-100.0, 50.0, 0);
 	Vec4f verts[5] = { p1, p2, p3, p4, p5 };
 
 	Vec3f c1(1, 0, 0), c2(0, 1, 0), c3(1, 1, 0), c4(0, 0, 1), c5(1, 0, 1);
@@ -744,7 +883,7 @@ void RenderDevice::matrixDisplay3D()
 	//identity Camera Matrix
 	Vec4f cameraPos(300 * sin(angle), 0, 300 * cos(angle));
 	cameraPos += origin;
-	Matrix4x4f cameraMatrix = Matrix4x4Camera<float>(cameraPos, origin, Vec4f(0, -1, 0));
+	Matrix4x4f cameraMatrix = Matrix4x4Camera<float>(cameraPos, origin, Vec4f(0, 1, 0));
 	TransformVectors(nVerts, verts, cameraMatrix);
 	
 	//identity Project Matrix
@@ -752,19 +891,12 @@ void RenderDevice::matrixDisplay3D()
 	float zNear = -100, zFar = -500;
 	Matrix4x4f projectMatrix = Matrix4x4Perspect<float>(fov, aspect, zNear, zFar);
 	TransformVectors(nVerts, verts, projectMatrix);
-
-	//homoneous transformation
+	//到此为止，为Clipp Space
+	//唯有齐次以后，方为NDC Space
 	int k;
-	for (k = 0; k < nVerts; ++k)
+	for (k = 2; k < nVerts; ++k)
 	{
-		verts[k].homogeneous();
+		rasterizeTrangle(verts[0], verts[k], verts[k - 1], colors[0], colors[k], colors[k - 1]);
 	}
-	
-	//identity Screen Matrix
-	Vec4f screenCenter(400, 300, 0);
-	Matrix4x4f screenMatrix = Matrix4x4Screen<float>(screenCenter, winWidth, winHeight);
-	TransformVectors(nVerts, verts, screenMatrix);
-	
-
-	drawTrangleBorder(nVerts, verts, colors);
+	rasterizeTrangle(verts[0], verts[1], verts[nVerts - 1], colors[0], colors[1], colors[nVerts - 1]);
 }

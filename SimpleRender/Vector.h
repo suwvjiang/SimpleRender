@@ -76,8 +76,8 @@ struct Vector2
 
 	bool operator ==(const Vector2& rhs)const { return (x = rhs.x && y == rhs.y); }
 	bool operator !=(const Vector2& rhs)const { return !(*this == rhs); }
-	T lengthSqr() { return x * x + y * y; }
-	T length() { return sqrt(lengthSqr()); }
+	float lengthSqr() { return x * x + y * y; }
+	float length() { return sqrf(lengthSqr()); }
 	void normalize() { *this /= length(); }
 };
 
@@ -85,13 +85,13 @@ struct Vector2
 /* Vector2 Nomenberfunction */
 /*-----------------------*/
 template<typename U>
-inline U Dot(const Vector2<U>& lhs, const Vector2<U>& rhs)
+inline float Dot(const Vector2<U>& lhs, const Vector2<U>& rhs)
 {
 	return lhs.x * rhs.x + lhs.y * rhs.y;
 }
 
 template<typename U>
-inline U Cross(const Vector2<U>& lhs, const Vector2<U>& rhs)
+inline float Cross(const Vector2<U>& lhs, const Vector2<U>& rhs)
 {
 	return lhs.x * rhs.y - lhs.y * rhs.x;
 }
@@ -99,7 +99,7 @@ inline U Cross(const Vector2<U>& lhs, const Vector2<U>& rhs)
 template<typename U>
 inline Vector2<U> Normalize(const Vector2<U>& lhs)
 {
-	U len = lhs.Length();
+	float len = lhs.length();
 	return lhs / len;
 }
 
@@ -262,12 +262,12 @@ struct Vector3
 		return !(*this == rhs);
 	}
 
-	T lengthSqr() const
+	float lengthSqr() const
 	{
 		return x * x + y * y + z * z;
 	}
 
-	T length() const
+	float length() const
 	{
 		return sqrt(lengthSqr());
 	}
@@ -282,7 +282,7 @@ struct Vector3
 /* Vector3 Nomenberfunction */
 /*-----------------------*/
 template<typename U>
-inline U Dot(const Vector3<U>& lhs, const Vector3<U>& rhs)
+inline float Dot(const Vector3<U>& lhs, const Vector3<U>& rhs)
 {
 	return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
@@ -298,7 +298,7 @@ inline Vector3<U> Cross(const Vector3<U>& lhs, const Vector3<U>& rhs)
 template<typename U>
 inline Vector3<U> Normalize(const Vector3<U>& lhs)
 {
-	U len = lhs.length();
+	float len = lhs.length();
 	return lhs / len;
 }
 
@@ -478,31 +478,23 @@ struct Vector4
 		return !(*this == rhs);
 	}
 
-	T lengthSqr() const
+	float lengthSqr() const
 	{
 		return x * x + y * y + z * z;
 	}
 
-	T length() const
+	float length() const
 	{
 		return sqrt(lengthSqr());
 	}
 
 	void normalize()
 	{
-		T len = length();
+		float len = length();
 		x /= len;
 		y /= len;
 		z /= len;
 		w = 0;
-	}
-
-	void homogeneous()
-	{
-		x /= w;
-		y /= w;
-		z /= w;
-		w = 1;
 	}
 };
 
@@ -510,7 +502,7 @@ struct Vector4
 /* Vector4 Nomenberfunction */
 /*-----------------------*/
 template<typename U>
-inline U Dot(const Vector4<U>& lhs, const Vector4<U>& rhs)
+inline float Dot(const Vector4<U>& lhs, const Vector4<U>& rhs)
 {
 	return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
@@ -534,7 +526,7 @@ inline Vector4<U> Mul(const Vector4<U>& lhs, const Vector4<U>& rhs)
 template<typename U>
 inline Vector4<U> Normalize(const Vector4<U>& rhs)
 {
-	U len = rhs.length();
+	float len = rhs.length();
 	return Vector4<U>(rhs.x /= len, rhs.y /= len, rhs.z /= len, 0);
 }
 

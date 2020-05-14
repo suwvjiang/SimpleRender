@@ -5,7 +5,13 @@
 const double TWO_PI = 6.2831853;
 const double PI = 3.1415926;
 
-inline int sign(const int& a) { return (a > 0) - (a < 0); }
+const static Vec3f Color_White(1.0);
+const static Vec3f Color_Black(.0);
+const static Vec3f Color_Red(1.0, 0.0, 0.0);
+const static Vec3f Color_Green(0.0, 1.0, 0.0);
+const static Vec3f Color_Blue(0.0, 0.0, 1.0);
+
+inline int Sign(const int& a) { return (a > 0) - (a < 0); }
 
 template<typename T>
 inline T Lerp(const T& v1, const T& v2, const float& t) { return v1 * (1 - t) + v2 * t; }
@@ -37,6 +43,15 @@ Vector4<T> Transform(const Matrix4x4<T>& m, const Vector4<T>& v)
 	temp.z = v.x * m[2][0] + v.y * m[2][1] + v.z * m[2][2] + v.w * m[2][3];
 	temp.w = v.x * m[3][0] + v.y * m[3][1] + v.z * m[3][2] + v.w * m[3][3];
 	return temp;
+}
+
+template<typename T>
+void TransformVectors(const int& nVerts, Vector4<T>* verts, const Matrix4x4<T>& m)
+{
+	for (int i = 0; i < nVerts; ++i)
+	{
+		verts[i] = Transform(m, verts[i]);
+	}
 }
 
 #pragma region Matrix3x3
@@ -308,7 +323,7 @@ Matrix4x4<T> Matrix4x4Perspect(const float& fov, const float& aspect, const floa
 }
 
 template<typename T>
-Matrix4x4<T> Matrix4x4Screen(const Vector4<T>& center, const float& width, const float& height)
+Matrix4x4<T> Matrix4x4Screen(const Vector2<T>& center, const float& width, const float& height)
 {
 	Matrix4x4<T> mat = IdentityMatrix4x4<T>();
 	mat[0][0] = width * 0.5;
@@ -320,15 +335,19 @@ Matrix4x4<T> Matrix4x4Screen(const Vector4<T>& center, const float& width, const
 }
 #pragma endregion
 
-
-#pragma region 
-template<typename T>
-void TransformVectors(const int& nVerts, Vector4<T>* verts, const Matrix4x4<T>& m)
+#pragma region Trangle
+//点是否在三角形之内，p0->p1->p2->p0 为逆时针
+inline bool CheckPointInTrangle(const Vec2i& pt, const Vec2i& p0, const Vec2i& p1, const Vec2i& p2)
 {
-	for (int i = 0; i < nVerts; ++i)
-	{
-		verts[i] = Transform(m, verts[i]);
-	}
+	Vec2i b0 = p1 - p0;
+	Vec2i b1 = p2 - p1;
+	Vec2i b2 = p0 - p2;
+
+	Vec2i v0 = pt - p0;
+	Vec2i v1 = pt - p1;
+	Vec2i v2 = pt - p2;
+
+	return Cross(b0, v0) > 0 && Cross(b1, v1) > 0 && Cross(b2, v2) > 0;
 }
 #pragma endregion
 
