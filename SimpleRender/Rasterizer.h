@@ -58,25 +58,59 @@ struct EdgeEquationSet
 //顶点数据
 struct Vertex
 {
-	Vec3f m_pos;
-	Vec3f m_normal;
-	Vec2f m_uv;
+	Vec3f pos;
+	Vec3f normal;
+	Vec2f uv;
+	Vec3f color;
 
 	Vertex() {};
-	Vertex(const Vec3f& pos, const Vec3f& normal, const Vec2f uv)
-		:m_pos(pos),m_normal(normal),m_uv(uv)
+	Vertex(const Vec3f& _pos, const Vec3f& _normal, const Vec2f& _uv, const Vec3f& _color)
+		:pos(_pos),normal(_normal),uv(_uv), color(_color)
 	{
 	}
 };
 //片段数据
 struct Fragment
 {
-	Vec4f m_pos;
-	Vec4f m_normal;
-	Vec4f m_uv;
+	Vec4f pos;
+	Vec4f normal;
+	Vec4f uv;
+	Vec3f color;
 };
 //三角形
 struct Triangle
 {
 	Fragment vertex[3];
+};
+//渲染窗口
+struct ViewPort
+{
+	float centerX;
+	float centerY;
+	float width;
+	float height;
+};
+//着色器
+struct ShaderStruct
+{
+	struct ConstBuffer
+	{
+		Matrix4x4f world;
+		Matrix4x4f view_proj;
+	};
+
+	static ConstBuffer constBuffer;
+
+	inline static void VertexShader(const Vertex& input, Fragment& output)
+	{
+		Vec4f pos(input.pos.x, input.pos.y, input.pos.z, 1);
+		Vec4f worldPos = Transform(constBuffer.world, pos);
+		output.pos = Transform(constBuffer.view_proj, worldPos);
+		output.color = input.color;
+	}
+
+	inline static void FragmentShader(const Fragment& input, Vec3f** output)
+	{
+		(*output)[0] = input.color;
+	}
 };

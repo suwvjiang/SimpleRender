@@ -26,7 +26,7 @@ public:
 	void setPos(const Vec3f& pos);
 	void setFocusPos(const Vec3f& focus);
 	void setLookDir(const Vec3f& lookDir);
-	void setConfig(const float& fov, const float& aspect, const float& zNear, const float& zFar);
+	void setViewInfo(const float& fov, const float& aspect, const float& zNear, const float& zFar);
 	void update();
 private:
 	CameraType m_type = Normal;

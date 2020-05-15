@@ -158,7 +158,7 @@ Matrix4x4<T> Matrix4x4Translation(const T& x, const T& y, const T& z)
 	return mat;
 }
 template<typename T>
-Matrix4x4<T> Matrix4x4TranslationFromVector(const Vector4<T>& v)
+Matrix4x4<T> Matrix4x4TranslationFromVector(const Vector3<T>& v)
 {
 	Matrix4x4<T> mat = IdentityMatrix4x4<T>();
 	mat[0][3] = v.x;
@@ -180,7 +180,7 @@ Matrix4x4<T> Matrix4x4Scaling(const float& scale_x, const float& scale_y, const 
 	return mat;
 }
 template<typename T>
-Matrix4x4<T> Matrix4x4ScalingFromVector(const Vector4<T>& v)
+Matrix4x4<T> Matrix4x4ScalingFromVector(const Vector3<T>& v)
 {
 	Matrix4x4<T> mat = IdentityMatrix4x4<T>();
 	mat[0][0] = v.x;
@@ -243,7 +243,7 @@ Matrix4x4<T> Matrix4x4RotationZ(const T& theta_radian)
 }
 
 template<typename T>
-Matrix4x4<T> Matrix4x4RotationAxis(const Vector4<T>& axi, const T& theta_radian)
+Matrix4x4<T> Matrix4x4RotationAxis(const Vector3<T>& axi, const T& theta_radian)
 {
 	Matrix4x4<T> mat = IdentityMatrix4x4<T>();
 
@@ -275,13 +275,13 @@ Matrix4x4<T> Matrix4x4RotationAxis(const Vector4<T>& axi, const T& theta_radian)
 
 #pragma region 3D View
 template<typename T>
-Matrix4x4<T> Matrix4x4Camera(const Vector4<T>& eyePos, const Vector4<T>& focusPos, const Vector4<T>& upDir = Vector4<T>(0, 1, 0, 0))
+Matrix4x4<T> Matrix4x4Camera(const Vector3<T>& eyePos, const Vector3<T>& focusPos, const Vector3<T>& upDir = Vector3<T>(0, 1, 0))
 {
-	Vector4<T> zDir = eyePos - focusPos;
+	Vector3<T> zDir = eyePos - focusPos;
 	zDir.normalize();
-	Vector4<T> xDir = Cross(upDir, zDir);
+	Vector3<T> xDir = Cross(upDir, zDir);
 	xDir.normalize();
-	Vector4<T> yDir = Cross(zDir, xDir);
+	Vector3<T> yDir = Cross(zDir, xDir);
 	yDir.normalize();
 
 	Matrix4x4<T> mat = IdentityMatrix4x4<T>();

@@ -15,6 +15,7 @@ typedef enum Boundary
 class RenderDevice
 {
 private:
+	bool inited = false;
 	int winWidth = 0;
 	int winHeight = 0;
 	Vec2i screenCenter;
@@ -28,6 +29,7 @@ public:
 	RenderDevice();
 	~RenderDevice();
 
+	void isInited();
 	void initRender(HDC hdc, int width, int height);
 	void releaseRender();
 	void clear();

@@ -2,7 +2,7 @@
 Camera::Camera() :m_pos(.0), m_lookDir(0, 0, 1), m_upDir(0, 1, 0)
 {
 	m_view = IdentityMatrix4x4<float>();
-	setConfig(PI / 2, 1, -1, -1000);
+	setViewInfo(PI / 2, 1, -1, -1000);
 	update();
 }
 
@@ -11,7 +11,7 @@ Camera::~Camera() {}
 Camera::Camera(const float& fov, const float& aspect, const float& zNear, const float& zFar) :m_pos(.0), m_lookDir(0, 0, 1), m_upDir(0, 1, 0)
 {
 	m_view = IdentityMatrix4x4<float>();
-	setConfig(fov, aspect, zNear, zFar);
+	setViewInfo(fov, aspect, zNear, zFar);
 	update();
 }
 
@@ -34,7 +34,7 @@ void Camera::setFocusPos(const Vec3f& focus)
 	update();
 }
 
-void Camera::setConfig(const float& fov, const float& aspect, const float& zNear, const float& zFar)
+void Camera::setViewInfo(const float& fov, const float& aspect, const float& zNear, const float& zFar)
 {
 	m_fov = fov;
 	m_aspect = aspect;
@@ -57,7 +57,7 @@ void Camera::setConfig(const float& fov, const float& aspect, const float& zNear
 void Camera::update()
 {
 	if (m_type == Focus)
-		m_lookDir = m_focus - m_pos;
+		m_lookDir = m_pos - m_focus;
 	m_lookDir.normalize();
 
 	m_rightDir = Cross(m_upDir, m_lookDir);

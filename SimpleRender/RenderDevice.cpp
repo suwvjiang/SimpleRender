@@ -1,14 +1,14 @@
 #include "RenderDevice.h"
 #include "Rasterizer.h"
 
+ShaderStruct::ConstBuffer ShaderStruct::constBuffer;
+
 RenderDevice::RenderDevice()
 {
-
 }
 
 RenderDevice::~RenderDevice()
 {
-
 }
 
 void RenderDevice::initRender(HDC hdc, int width, int height)
@@ -876,21 +876,23 @@ void RenderDevice::matrixDisplay3D()
 	Vec3f c1(1, 0, 0), c2(0, 1, 0), c3(1, 1, 0), c4(0, 0, 1), c5(1, 0, 1);
 	Vec3f colors[5] = { c1, c2, c3, c4, c5 };
 
-	Vec4f origin(400, 300, 0);
+	Vec3f origin(400, 300, 0);
 	Matrix4x4f modelMatrix = Matrix4x4TranslationFromVector<float>(origin);
 	TransformVectors(nVerts, verts, modelMatrix);
 
 	//identity Camera Matrix
-	Vec4f cameraPos(300 * sin(angle), 0, 300 * cos(angle));
+	Vec3f cameraPos(300 * sin(angle), 0, 300 * cos(angle));
 	cameraPos += origin;
-	Matrix4x4f cameraMatrix = Matrix4x4Camera<float>(cameraPos, origin, Vec4f(0, 1, 0));
-	TransformVectors(nVerts, verts, cameraMatrix);
+	m_camera.setPos(cameraPos);
+	m_camera.setFocusPos(origin);
 	
 	//identity Project Matrix
 	float fov = PI * 3 / 9, aspect = 4.0 / 3;
 	float zNear = -100, zFar = -500;
-	Matrix4x4f projectMatrix = Matrix4x4Perspect<float>(fov, aspect, zNear, zFar);
-	TransformVectors(nVerts, verts, projectMatrix);
+	m_camera.setViewInfo(fov, aspect, zNear, zFar);
+
+	TransformVectors(nVerts, verts, m_camera.viewProjMatrix());
+
 	//到此为止，为Clipp Space
 	//唯有齐次以后，方为NDC Space
 	int k;
