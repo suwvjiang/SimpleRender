@@ -3,6 +3,8 @@
 #include "stdfx.h"
 #include "MathUtils.h"
 #include "Camera.h"
+#include "RenderContext.h"
+#include "Buffer.h"
 
 typedef enum Boundary
 {
@@ -15,25 +17,39 @@ typedef enum Boundary
 class RenderDevice
 {
 private:
-	bool inited = false;
-	int winWidth = 0;
-	int winHeight = 0;
+	bool m_inited = false;
+
 	Vec2i screenCenter;
+	int winWidth, winHeight;
+	float depthBuffer[480000];
+
 	HDC screenHDC = NULL;
 
 	Camera m_camera;
-	float angle = 0;
-	float depthBuffer[480000];
+	Viewport m_viewPort;
+
+	std::shared_ptr<RenderContext> m_context3D;
+	std::shared_ptr<Buffer> m_vertexBuffer;
+	std::shared_ptr<Buffer> m_indexBuffer;
+
+	float m_angle = 0;
+	float m_radius = 400;
+	Vec3f m_origin;
 
 public:
 	RenderDevice();
 	~RenderDevice();
 
-	void isInited();
-	void initRender(HDC hdc, int width, int height);
-	void releaseRender();
+	bool isInited();
+	void initDevice(HDC& hdc, int width, int height);
+	void releaseDevice();
 	void clear();
+	void update();
 	void drawcall();
+
+	void initMeshInfo();
+
+	std::shared_ptr<Buffer> createBuffer(const BufferDesc& desc);
 
 #pragma region Raster Function
 	void drawPixel(int x, int y);

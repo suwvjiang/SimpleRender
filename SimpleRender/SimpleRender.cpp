@@ -1,5 +1,6 @@
 // SimpleRender.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+//右手定则坐标系
+//相机与世界同一坐标系
 
 #include "stdfx.h"
 #include "RenderDevice.h"
@@ -8,9 +9,10 @@ static const int windowWidth = 800;
 static const int windowHeight = 600;
 const char* windowTitle = "Simple Render";
 
+bool inited = false;
 HDC hdc = NULL;
 HDC screenHDC = NULL;
-RenderDevice* device = NULL;
+std::shared_ptr<RenderDevice> device;
 HWND handler = NULL;
 
 static LRESULT OnEvent(HWND, UINT, WPARAM, LPARAM);
@@ -49,14 +51,14 @@ void initWindow()
 
 void initRender()
 {
-	device = new RenderDevice();
-	device->initRender(screenHDC, windowWidth, windowHeight);
+	device = std::make_shared<RenderDevice>();
+	device->initDevice(screenHDC, windowWidth, windowHeight);
 }
 
 void doRender()
 {
 	device->clear();
-
+	device->update();
 	device->drawcall();
 
 	//双缓冲
@@ -116,8 +118,13 @@ LRESULT OnEvent(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int main()
 {
-	initWindow();
-	initRender();
+	if (!inited)
+	{
+		inited = true;
+
+		initWindow();
+		initRender();
+	}
 	update();
 	return 0;
 }

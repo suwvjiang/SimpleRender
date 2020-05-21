@@ -18,7 +18,6 @@ Camera::Camera(const float& fov, const float& aspect, const float& zNear, const 
 void Camera::setPos(const Vec3f& pos)
 {
 	m_pos = pos;
-	update();
 }
 
 void Camera::setLookDir(const Vec3f& lookDir)
@@ -31,7 +30,6 @@ void Camera::setFocusPos(const Vec3f& focus)
 {
 	m_type = Focus;
 	m_focus = focus; 
-	update();
 }
 
 void Camera::setViewInfo(const float& fov, const float& aspect, const float& zNear, const float& zFar)
@@ -50,8 +48,6 @@ void Camera::setViewInfo(const float& fov, const float& aspect, const float& zNe
 	m_proj[2][3] = -(2 * m_zNear * m_zFar) / (m_zNear - m_zFar);
 	m_proj[3][2] = -1;
 	m_proj[3][3] = 0;
-
-	update();
 }
 
 void Camera::update()

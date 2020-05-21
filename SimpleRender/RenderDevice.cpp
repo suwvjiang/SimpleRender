@@ -9,34 +9,74 @@ RenderDevice::RenderDevice()
 
 RenderDevice::~RenderDevice()
 {
+	m_context3D = nullptr;
+	m_vertexBuffer = nullptr;
+	m_indexBuffer = nullptr;
 }
 
-void RenderDevice::initRender(HDC hdc, int width, int height)
+bool RenderDevice::isInited()
+{
+	return m_inited;
+}
+
+void RenderDevice::initDevice(HDC& hdc, int width, int height)
 {
 	screenHDC = hdc;
+
 	winWidth = width;
-	winHeight = height;
+	winHeight = height; 
 	screenCenter.x = winWidth >> 1;
 	screenCenter.y = winHeight >> 1;
 
 	int cnt = winWidth * winHeight;
 	for (int i = 0; i < cnt; ++i)
-	{
-		depthBuffer[i] = -1.0f;
-	}
+		depthBuffer[i] = 1.0f;
+
+	m_viewPort.width = width;
+	m_viewPort.height = height;
+	m_viewPort.originX = width >> 1;
+	m_viewPort.originY = height >> 1;
+
+	m_context3D = std::make_shared<RenderContext>();
+	m_context3D->setViewport(m_viewPort);
+
+	//identity Project Matrix
+	float fov = PI * 3 / 9, aspect = 4.0 / 3;
+	float zNear = -1, zFar = -1000;
+	m_camera.setViewInfo(fov, aspect, zNear, zFar);
+
+	m_origin.x = width >> 1;
+	m_origin.y = (height >> 1);
+	m_origin.z = 0;
+	m_camera.setFocusPos(m_origin);
+	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin);
+
+	initMeshInfo();
 }
 
-void RenderDevice::releaseRender()
+void RenderDevice::releaseDevice()
 {
 
 }
 
 void RenderDevice::clear()
 {
-	BitBlt(screenHDC, 0, 0, winWidth, winHeight, NULL, NULL, NULL, BLACKNESS);
-
+	BitBlt(screenHDC, 0, 0, m_viewPort.width, m_viewPort.height, NULL, NULL, NULL, BLACKNESS);
 }
 
+const static float Rotate_Speed = 360.0;
+//更新相机信息
+void RenderDevice::update()
+{
+	m_angle += PI / Rotate_Speed;
+	Vec3f pos(m_radius * sin(m_angle), 0, m_radius * cos(m_angle));
+	pos += m_origin;
+	m_camera.setPos(pos);
+	m_camera.update();
+
+	ShaderStruct::constBuffer.view_proj = m_camera.viewProjMatrix();
+}
+//绘制
 void RenderDevice::drawcall()
 {
 	//drawLineBres(100, 200, 300, 400);
@@ -46,8 +86,98 @@ void RenderDevice::drawcall()
 	//testLineClip();
 	//testPolygonClip();
 	//drawTrangleByHalfSpace(Vec2i(100, 100), Vec2i(300, 100), Vec2i(200, 300), Color_Red, Color_Green, Color_Blue);
+	//matrixDisplay3D();
+	
+	m_context3D->clearDepthBuffer();
+	m_context3D->setIndexBuffer(m_indexBuffer);
+	m_context3D->setVertexBuffer(m_vertexBuffer);
 
-	matrixDisplay3D();
+	m_context3D->setVertexShader(ShaderStruct::VS);
+	m_context3D->setFragmentShader(ShaderStruct::FS);
+
+	m_context3D->draw(screenHDC);
+}
+
+void RenderDevice::initMeshInfo()
+{
+	float w2 = 100;
+	float h2 = 100;
+	float d2 = 100;
+
+	//Vertex
+	Vertex v[24];
+	v[0] = Vertex(-w2, -h2, -d2, 1, 0, 0);
+	v[1] = Vertex(-w2, +h2, -d2, 1, 1, 0);
+	v[2] = Vertex(+w2, +h2, -d2, 0, 1, 1);
+	v[3] = Vertex(+w2, -h2, -d2, 1, 0, 1);
+
+	v[4] = Vertex(-w2, -h2, +d2, 0, 1, 1);
+	v[5] = Vertex(+w2, -h2, +d2, 0, 1, 0);
+	v[6] = Vertex(+w2, +h2, +d2, 1, 0, 0);
+	v[7] = Vertex(-w2, +h2, +d2, 0, 0, 1);
+
+	v[8] = Vertex(-w2, +h2, -d2, 1, 1, 0);
+	v[9] = Vertex(-w2, +h2, +d2, 0, 0, 1);
+	v[10] = Vertex(+w2, +h2, +d2, 1, 0, 0);
+	v[11] = Vertex(+w2, +h2, -d2, 0, 1, 1);
+
+	v[12] = Vertex(-w2, -h2, -d2, 1, 0, 0);
+	v[13] = Vertex(+w2, -h2, -d2, 1, 0, 1);
+	v[14] = Vertex(+w2, -h2, +d2, 0, 1, 0);
+	v[15] = Vertex(-w2, -h2, +d2, 0, 1, 1);
+
+	v[16] = Vertex(-w2, -h2, +d2, 0, 1, 1);
+	v[17] = Vertex(-w2, +h2, +d2, 0, 0, 1);
+	v[18] = Vertex(-w2, +h2, -d2, 1, 1, 0);
+	v[19] = Vertex(-w2, -h2, -d2, 1, 0, 0);
+
+	v[20] = Vertex(+w2, -h2, -d2, 1, 0, 1);
+	v[21] = Vertex(+w2, +h2, -d2, 0, 1, 1);
+	v[22] = Vertex(+w2, +h2, +d2, 1, 0, 0);
+	v[23] = Vertex(+w2, -h2, +d2, 0, 1, 0);
+	
+	//Index
+	//逆时针
+	size_t i[36];
+	i[0] = 0; i[1] = 2; i[2] = 1;
+	i[3] = 0; i[4] = 3; i[5] = 2;
+
+	i[6] = 4; i[7] = 6; i[8] = 5;
+	i[9] = 4; i[10] = 7; i[11] = 6;
+
+	i[12] = 8; i[13] = 10; i[14] = 9;
+	i[15] = 8; i[16] = 11; i[17] = 10;
+
+	i[18] = 12; i[19] = 14; i[20] = 13;
+	i[21] = 12; i[22] = 15; i[23] = 14;
+
+	i[24] = 16; i[25] = 18; i[26] = 17;
+	i[27] = 16; i[28] = 19; i[29] = 18;
+
+	i[30] = 20; i[31] = 22; i[32] = 21;
+	i[33] = 20; i[34] = 23; i[35] = 22;
+
+	BufferDesc vertexDesc;
+	vertexDesc.stride = sizeof(Vertex);
+	vertexDesc.numOfEle = 24;
+	vertexDesc.data = v;
+	vertexDesc.bufferSize = sizeof(Vertex) * 24;
+
+	m_vertexBuffer = createBuffer(vertexDesc);
+
+	BufferDesc indexDesc;
+	indexDesc.stride = sizeof(size_t);
+	indexDesc.numOfEle = 36;
+	indexDesc.data = i;
+	indexDesc.bufferSize = sizeof(size_t) * 36;
+
+	m_indexBuffer = createBuffer(indexDesc);
+}
+
+std::shared_ptr<Buffer> RenderDevice::createBuffer(const BufferDesc& desc)
+{
+	std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(desc);
+	return buffer;
 }
 
 #pragma region Raster Function
@@ -857,7 +987,6 @@ void RenderDevice::rasterizeTrangle(const Vec4f& v0, const Vec4f& v1, const Vec4
 
 }
 
-const static float Rotate_Speed = 360.0;
 void RenderDevice::matrixDisplay3D()
 {
 	int cnt = winWidth * winHeight;
@@ -867,7 +996,7 @@ void RenderDevice::matrixDisplay3D()
 	drawLineBres(0, 300, 800, 300);
 	drawLineBres(400, 0, 400, 600);
 
-	angle += PI / Rotate_Speed;
+	m_angle += PI / Rotate_Speed;
 
 	int nVerts = 5;
 	Vec4f p1(0, -50.0, 0), p2(0, 50.0, 100), p3(100.0, 50.0, 0), p4(.0, 50.0, -100.0), p5(-100.0, 50.0, 0);
@@ -881,16 +1010,12 @@ void RenderDevice::matrixDisplay3D()
 	TransformVectors(nVerts, verts, modelMatrix);
 
 	//identity Camera Matrix
-	Vec3f cameraPos(300 * sin(angle), 0, 300 * cos(angle));
+	Vec3f cameraPos(300 * sin(m_angle), 0, 300 * cos(m_angle));
 	cameraPos += origin;
 	m_camera.setPos(cameraPos);
 	m_camera.setFocusPos(origin);
+	m_camera.update();
 	
-	//identity Project Matrix
-	float fov = PI * 3 / 9, aspect = 4.0 / 3;
-	float zNear = -100, zFar = -500;
-	m_camera.setViewInfo(fov, aspect, zNear, zFar);
-
 	TransformVectors(nVerts, verts, m_camera.viewProjMatrix());
 
 	//到此为止，为Clipp Space
