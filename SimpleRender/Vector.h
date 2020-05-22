@@ -19,7 +19,7 @@ struct Vector2
 		struct { T u, v; };
 	};
 
-	Vector2() {};
+	Vector2() :x(0), y(0) {};
 	Vector2(const T& _x) :x(_x), y(_x) {};
 	Vector2(const T& _x, const T _y) :x(_x), y(_y) {};
 	Vector2(const Vector2& v) :x(v.x), y(v.y) {};
@@ -152,7 +152,7 @@ struct Vector3
 	/*--------------*/
 	/* Constructors */
 	/*--------------*/
-	Vector3() {};
+	Vector3():x(0), y(0), z(0) {};
 	Vector3(const T& _x) :x(_x), y(_x), z(_x) {};
 	Vector3(const T& _x, const T& _y, const T& _z) :x(_x), y(_y), z(_z) {};
 	Vector3(const T* t) : x(t[0]), y(t[1]), t(t[2]) {};
@@ -361,7 +361,7 @@ struct Vector4
 	/*--------------*/
 	/* Constructors */
 	/*--------------*/
-	Vector4() {};
+	Vector4():x(0), y(0), z(0), w(1) {};
 	Vector4(const T& _x) :x(_x), y(_x), z(_x), w(_x) {};
 	Vector4(const T& _x, const T& _y, const T& _z, const T& _w = 1) : x(_x), y(_y), z(_z), w(_w) {};
 	Vector4(const T* t) :x(t[0]), y(t[1]), z(t[2]), w(t[3]) {};

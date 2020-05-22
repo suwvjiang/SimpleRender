@@ -357,9 +357,9 @@ const int winRightBitCode = 0x2;
 const int winBottomBitCode = 0x4;
 const int winTopBitCode = 0x8;
 
-inline int inside(int code) { return int(!code); }//È¡·´
-inline int reject(int code1, int code2) { return int(code1 & code2); }//ÇÒ
-inline int accept(int code1, int code2) { return int(!(code1 | code2)); }
+inline int inside(int code) { return int(!code); }//code == 0
+inline int reject(int code1, int code2) { return int(code1 & code2); }//code1 & code2 != 0
+inline int accept(int code1, int code2) { return int(!(code1 | code2)); }//code1 | code2 == 0
 
 inline int encode(const Vec2i& pt, const Vec2i& winMin, const Vec2i& winMax)
 {

@@ -50,13 +50,9 @@ void RenderContext::setFragmentShader(FragmentShader fs)
 
 void RenderContext::clearDepthBuffer()
 {
-	auto itBegin = m_depthBuffer.begin();
-	auto itEnd = m_depthBuffer.end();
-	while (itBegin != itEnd)
-	{
-		*itBegin = -1.0;
-		++itBegin;
-	}
+	size_t cnt = m_depthBuffer.size();
+	for (size_t i = 0; i < cnt; ++i)
+		m_depthBuffer[i] = -1.0;
 }
 
 void RenderContext::draw(HDC& hdc)

@@ -15,14 +15,14 @@ struct EdgeEquation
 		value = p.x * i + p.y * j - k;
 	}
 
-	void incrementX(const int& step = 1)
+	void incrementX()
 	{
-		value += step * i;
+		value += i;
 	}
 
-	void incrementY(const int& step = 1)
+	void incrementY()
 	{
-		value += step * j;
+		value += j;
 	}
 };
 //重心坐标系
@@ -37,18 +37,18 @@ struct EdgeEquationSet
 		e2 = EdgeEquation(v0, v1, p);
 	}
 
-	void incrementX(const int& step = 1)
+	void incrementX()
 	{
-		e0.incrementX(step);
-		e1.incrementX(step);
-		e2.incrementX(step);
+		e0.incrementX();
+		e1.incrementX();
+		e2.incrementX();
 	}
 
-	void incrementY(const int& step = 1)
+	void incrementY()
 	{
-		e0.incrementY(step);
-		e1.incrementY(step);
-		e2.incrementY(step);
+		e0.incrementY();
+		e1.incrementY();
+		e2.incrementY();
 	}
 
 	bool evaluate()
@@ -60,10 +60,11 @@ struct EdgeEquationSet
 struct Vertex
 {
 	Vec3f pos;
+	Vec2f uv;
 	Vec3f color;
 
 	Vertex() {};
-	Vertex(const Vec3f& _pos, const Vec3f& _color):pos(_pos), color(_color)
+	Vertex(const Vec3f& _pos, const Vec2f& _uv, const Vec3f& _color):pos(_pos), uv(_uv), color(_color)
 	{
 	}
 	Vertex(const float& x, const float& y, const float& z,
@@ -75,6 +76,7 @@ struct Vertex
 struct Fragment
 {
 	Vec4f pos;
+	Vec2f uv;
 	Vec3f color;
 };
 //三角形
@@ -125,8 +127,17 @@ using RenderOrder = std::function<void(int x, int y, const Vec3f & col)>;
 inline void BaseInterpolationFunc(const Fragment& frag0, const Fragment& frag1, const Fragment& frag2,
 	const float& t0, const float& t1, const float& t2, Fragment& destFrag)
 {
-	destFrag.pos = frag0.pos * t0 + frag1.pos * t1 + frag2.pos * t2;
-	destFrag.color = frag0.color * t0 + frag1.color * t1 + frag2.color * t2;
+	destFrag.pos += frag0.pos * t0;
+	destFrag.pos += frag1.pos * t1;
+	destFrag.pos += frag2.pos * t2;
+
+	destFrag.uv += frag0.uv * t0;
+	destFrag.uv += frag1.uv * t1;
+	destFrag.uv += frag2.uv * t2;
+
+	destFrag.color += frag0.color * t0;
+	destFrag.color += frag1.color * t1;
+	destFrag.color += frag2.color * t2;
 }
 
 class Rasterizer
@@ -160,10 +171,6 @@ public:
 		p1 = NDCToViewport(triangle.vertex[1].pos, m_viewPort);
 		p2 = NDCToViewport(triangle.vertex[2].pos, m_viewPort);
 
-		//drawLineBres(p0.x, p0.y, p1.x, p1.y);
-		//drawLineBres(p0.x, p0.y, p2.x, p2.y);
-		//drawLineBres(p1.x, p1.y, p2.x, p2.y);
-
 		int minX, minY, maxX, maxY;
 		minX = max(min(min(p0.x, p1.x), p2.x), 0);
 		minY = max(min(min(p0.y, p1.y), p2.y), 0);
@@ -180,7 +187,8 @@ public:
 		EdgeEquationSet tempY(p0, p1, p2, p);
 		EdgeEquationSet tempX;
 
-		int i, j, index;
+		int i, j;
+		int index = minY * m_viewPort.width + minX;
 		float z0, z1, z2;
 		float param0, param1, param2, cameraZ, depth;
 		for (j = minY; j < maxY; ++j)
@@ -188,7 +196,6 @@ public:
 			tempX = tempY;
 			for (i = minX; i < maxX; ++i)
 			{
-				index = j * m_viewPort.width + i;
 				if (tempX.evaluate())
 				{
 					param0 = float(tempX.e0.value) * inv_camera_z[0] / area.value;
@@ -211,14 +218,15 @@ public:
 						pixels.emplace_back(Vec2i(i, j));
 
 						Fragment fragDest;
-						m_intFunc(triangle.vertex[0], triangle.vertex[1], triangle.vertex[2], param0, param1, param2, fragDest);
+						BaseInterpolationFunc(triangle.vertex[0], triangle.vertex[1], triangle.vertex[2], param0, param1, param2, fragDest);
 						frag.emplace_back(fragDest);
 					}
 				}
 
+				index++;
 				tempX.incrementX();
 			}
-
+			index += m_viewPort.width - maxX + minX;
 			tempY.incrementY();
 		}
 	}

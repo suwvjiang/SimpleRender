@@ -100,9 +100,9 @@ void RenderDevice::drawcall()
 
 void RenderDevice::initMeshInfo()
 {
-	float w2 = 100;
-	float h2 = 100;
-	float d2 = 100;
+	float w2 = 50;
+	float h2 = 50;
+	float d2 = 50;
 
 	//Vertex
 	Vertex v[24];
