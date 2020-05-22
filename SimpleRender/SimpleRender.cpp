@@ -5,8 +5,8 @@
 #include "stdfx.h"
 #include "RenderDevice.h"
 
-static const int windowWidth = 800;
-static const int windowHeight = 600;
+static const int windowWidth = 400;
+static const int windowHeight = 400;
 const char* windowTitle = "Simple Render";
 
 bool inited = false;

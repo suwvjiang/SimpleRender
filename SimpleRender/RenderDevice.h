@@ -21,7 +21,7 @@ private:
 
 	Vec2i screenCenter;
 	int winWidth, winHeight;
-	float depthBuffer[480000];
+	float depthBuffer[160000];
 
 	HDC screenHDC = NULL;
 
@@ -33,7 +33,7 @@ private:
 	std::shared_ptr<Buffer> m_indexBuffer;
 
 	float m_angle = 0;
-	float m_radius = 400;
+	float m_radius = 300;
 	Vec3f m_origin;
 
 public:

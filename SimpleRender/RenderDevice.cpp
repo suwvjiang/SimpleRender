@@ -41,7 +41,7 @@ void RenderDevice::initDevice(HDC& hdc, int width, int height)
 	m_context3D->setViewport(m_viewPort);
 
 	//identity Project Matrix
-	float fov = PI * 3 / 9, aspect = 4.0 / 3;
+	float fov = PI * 3 / 9, aspect = 1.0;
 	float zNear = -1, zFar = -1000;
 	m_camera.setViewInfo(fov, aspect, zNear, zFar);
 
@@ -100,9 +100,9 @@ void RenderDevice::drawcall()
 
 void RenderDevice::initMeshInfo()
 {
-	float w2 = 50;
-	float h2 = 50;
-	float d2 = 50;
+	float w2 = 75;
+	float h2 = 75;
+	float d2 = 75;
 
 	//Vertex
 	Vertex v[24];

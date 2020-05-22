@@ -14,7 +14,7 @@ inline bool inside(int code) {
 }
 inline bool reject(int code0, int code1)
 {
-	return (code0 & code1) != 0;
+	return (code0 & code1) != ViewportInsideBitCode;
 }
 inline bool accept(int code0, int code1)
 {

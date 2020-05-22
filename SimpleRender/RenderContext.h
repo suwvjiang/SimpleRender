@@ -31,7 +31,7 @@ private:
 	std::shared_ptr<Buffer> m_indexBuffer;
 	std::vector<float> m_depthBuffer;
 
-	void OutputToRenderTarget(const Vec2i& pixel, const Vec3f& color, HDC& target)
+	void outputToRenderTarget(const Vec2i& pixel, const Vec3f& color, HDC& target)
 	{
 		SetPixel(target, pixel.x, pixel.y, RGB(255 * color.r, 255 * color.g, 255 * color.b));
 	}

@@ -75,6 +75,9 @@ struct Vertex
 //片段数据
 struct Fragment
 {
+	Fragment() {};
+	Fragment(const Vec3f& _col) :color(_col) {};
+
 	Vec4f pos;
 	Vec2f uv;
 	Vec3f color;
@@ -121,7 +124,6 @@ using VertexShader = std::function<void(const Vertex& pVertexIn, Fragment& pVert
 using FragmentShader = std::function<void(const Fragment& pFragmentIn, Vec3f *pFragmentOut)>;
 using RasterizerInterpolationFunc = std::function<void(const Fragment & frag0, const Fragment & frag1, const Fragment & frag2,
 	const float& t0, const float& t1, const float& t2, Fragment & destFrag)>;
-using RenderOrder = std::function<void(int x, int y, const Vec3f & col)>;
 
 //片段着色插值函数
 inline void BaseInterpolationFunc(const Fragment& frag0, const Fragment& frag1, const Fragment& frag2,
@@ -140,6 +142,8 @@ inline void BaseInterpolationFunc(const Fragment& frag0, const Fragment& frag1, 
 	destFrag.color += frag2.color * t2;
 }
 
+static constexpr int blockSize = 16;
+
 class Rasterizer
 {
 public:
@@ -154,7 +158,7 @@ public:
 		m_viewPort = viewPort;
 	}
 
-	void Rasterize(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, std::vector<float>& depthBuffer)
+	void rasterize(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, std::vector<float>& depthBuffer)
 	{
 		float inv_camera_z[3];
 		inv_camera_z[0] = 1 / triangle.vertex[0].pos.w;
@@ -182,6 +186,9 @@ public:
 			return;
 
 		EdgeEquation area(p0, p1, p2);
+		if (area.value < 0)
+			return;
+
 		p.x = minX;
 		p.y = minY;
 		EdgeEquationSet tempY(p0, p1, p2, p);
@@ -208,9 +215,9 @@ public:
 					param1 *= cameraZ;
 					param2 *= cameraZ;
 					//depth = z in ndc space
-					depth = triangle.vertex[0].pos.z * param0
-						+ triangle.vertex[1].pos.z * param1
-						+ triangle.vertex[2].pos.z * param2;
+					depth = triangle.vertex[0].pos.z * param0;
+					depth += triangle.vertex[1].pos.z * param1;
+					depth += triangle.vertex[2].pos.z * param2;
 					if (depth > depthBuffer[index])
 					{
 						depthBuffer[index] = depth;
@@ -229,6 +236,87 @@ public:
 			index += m_viewPort.width - maxX + minX;
 			tempY.incrementY();
 		}
+	}
+
+	void drawLineBres(const Vec2i& v0, const Vec2i& v1, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
+	{
+		int dx = abs(v1.x - v0.x);
+		int dy = abs(v1.y - v0.y);
+		int dx2 = dx + dx;
+		int dy2 = dy + dy;
+		int x, y, stepX, stepY;
+
+		x = v0.x;
+		y = v0.y;
+		stepX = Sign(v1.x - v0.x);
+		stepY = Sign(v1.y - v0.y);
+
+		frag.emplace_back(Fragment(Color_White));
+		pixels.emplace_back(Vec2i(x, y));
+		if (dx > dy)
+		{
+			int p = dy2 - dx;
+			int a = dy2 - dx2;
+			for (int k = 0; k < dx; ++k)
+			{
+				x += stepX;
+				if (p < 0)
+				{
+					p = p + dy2;
+				}
+				else
+				{
+					y += stepY;
+					p = p + a;
+				}
+
+				frag.emplace_back(Fragment(Color_White));
+				pixels.emplace_back(Vec2i(x, y));
+			}
+		}
+		else
+		{
+			int p = dx2 - dy;
+			int a = dx2 - dy2;
+			for (int k = 0; k < dy; ++k)
+			{
+				y += stepY;
+				if (p < 0)
+				{
+					p = p + dx2;
+				}
+				else
+				{
+					x += stepX;
+					p = p + a;
+				}
+
+				frag.emplace_back(Fragment(Color_White));
+				pixels.emplace_back(Vec2i(x, y));
+			}
+		}
+	}
+
+	void rasterizeBorder(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
+	{
+		float inv_camera_z[3];
+		inv_camera_z[0] = 1 / triangle.vertex[0].pos.w;
+		inv_camera_z[1] = 1 / triangle.vertex[1].pos.w;
+		inv_camera_z[2] = 1 / triangle.vertex[2].pos.w;
+
+		//齐次转换
+		triangle.vertex[0].pos *= inv_camera_z[0];
+		triangle.vertex[1].pos *= inv_camera_z[1];
+		triangle.vertex[2].pos *= inv_camera_z[2];
+
+		Vec2i p0, p1, p2, p;
+		p0 = NDCToViewport(triangle.vertex[0].pos, m_viewPort);
+		p1 = NDCToViewport(triangle.vertex[1].pos, m_viewPort);
+		p2 = NDCToViewport(triangle.vertex[2].pos, m_viewPort);
+
+		drawLineBres(p0, p1, frag, pixels);
+		drawLineBres(p0, p2, frag, pixels);
+		drawLineBres(p1, p2, frag, pixels);
 	}
 private:
 
