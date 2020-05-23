@@ -87,7 +87,7 @@ void RenderContext::draw(HDC& hdc)
 	delete[] tempVertex;*/
 	
 	//todo-clip
-	if (!clipLineByCohSuthIn3D(tempVertex[2].pos, tempVertex[0].pos))
+	if (!clipLineByLiangBarskIn3D(tempVertex[2].pos, tempVertex[0].pos))
 		return;
 	
 	std::vector<Fragment> fragments;
