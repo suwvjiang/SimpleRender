@@ -33,7 +33,7 @@ private:
 	std::shared_ptr<Buffer> m_indexBuffer;
 
 	float m_angle = 0;
-	float m_radius = 300;
+	float m_radius = 100;
 	Vec3f m_origin;
 
 public:

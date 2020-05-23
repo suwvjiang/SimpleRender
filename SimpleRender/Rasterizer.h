@@ -238,6 +238,41 @@ public:
 		}
 	}
 
+	void rasterizeBorder(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
+	{
+		float inv_camera_z[3];
+		inv_camera_z[0] = 1 / triangle.vertex[0].pos.w;
+		inv_camera_z[1] = 1 / triangle.vertex[1].pos.w;
+		inv_camera_z[2] = 1 / triangle.vertex[2].pos.w;
+
+		//齐次转换
+		triangle.vertex[0].pos *= inv_camera_z[0];
+		triangle.vertex[1].pos *= inv_camera_z[1];
+		triangle.vertex[2].pos *= inv_camera_z[2];
+
+		Vec2i p0, p1, p2;
+		p0 = NDCToViewport(triangle.vertex[0].pos, m_viewPort);
+		p1 = NDCToViewport(triangle.vertex[1].pos, m_viewPort);
+		p2 = NDCToViewport(triangle.vertex[2].pos, m_viewPort);
+
+		drawLineBres(p0, p1, frag, pixels);
+		drawLineBres(p0, p2, frag, pixels);
+		drawLineBres(p1, p2, frag, pixels);
+	}
+
+	void rasterizeLine(Fragment& v0, Fragment& v1, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
+	{
+		v0.pos /= v0.pos.w;
+		v1.pos /= v1.pos.w;
+
+		Vec2i p0, p1;
+		p0 = NDCToViewport(v0.pos, m_viewPort);
+		p1 = NDCToViewport(v1.pos, m_viewPort);
+
+		drawLineBres(p0, p1, frag, pixels);
+	}
+private:
+
 	void drawLineBres(const Vec2i& v0, const Vec2i& v1, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
 	{
 		int dx = abs(v1.x - v0.x);
@@ -296,29 +331,6 @@ public:
 			}
 		}
 	}
-
-	void rasterizeBorder(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
-	{
-		float inv_camera_z[3];
-		inv_camera_z[0] = 1 / triangle.vertex[0].pos.w;
-		inv_camera_z[1] = 1 / triangle.vertex[1].pos.w;
-		inv_camera_z[2] = 1 / triangle.vertex[2].pos.w;
-
-		//齐次转换
-		triangle.vertex[0].pos *= inv_camera_z[0];
-		triangle.vertex[1].pos *= inv_camera_z[1];
-		triangle.vertex[2].pos *= inv_camera_z[2];
-
-		Vec2i p0, p1, p2, p;
-		p0 = NDCToViewport(triangle.vertex[0].pos, m_viewPort);
-		p1 = NDCToViewport(triangle.vertex[1].pos, m_viewPort);
-		p2 = NDCToViewport(triangle.vertex[2].pos, m_viewPort);
-
-		drawLineBres(p0, p1, frag, pixels);
-		drawLineBres(p0, p2, frag, pixels);
-		drawLineBres(p1, p2, frag, pixels);
-	}
-private:
 
 	//转成屏幕坐标
 	Vec2i NDCToViewport(const Vec4f pos, const Viewport& viewport)

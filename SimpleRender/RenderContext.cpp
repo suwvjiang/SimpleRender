@@ -64,14 +64,14 @@ void RenderContext::draw(HDC& hdc)
 
 	size_t vertexNum = m_vertexBuffer->getNumOfEle();
 	Vertex* vertexData = static_cast<Vertex*>(m_vertexBuffer->getData());
-	Fragment* processedVertex = new Fragment[vertexNum];
+	Fragment* tempVertex = new Fragment[vertexNum];
 
 	//顶点着色
 	for (size_t i = 0; i < vertexNum; ++i)
 	{
-		m_vertexShader(vertexData[i], processedVertex[i]);
+		m_vertexShader(vertexData[i], tempVertex[i]);
 	}
-
+	/*
 	//构建三角形
 	size_t triangleNum = m_indexBuffer->getNumOfEle() / 3;
 	size_t* indexData = static_cast<size_t*>(m_indexBuffer->getData());
@@ -80,17 +80,34 @@ void RenderContext::draw(HDC& hdc)
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
 		begin = i * 3;
-		triangles[i].vertex[0] = processedVertex[indexData[begin]];
-		triangles[i].vertex[1] = processedVertex[indexData[begin + 1]];
-		triangles[i].vertex[2] = processedVertex[indexData[begin + 2]];
+		triangles[i].vertex[0] = tempVertex[indexData[begin]];
+		triangles[i].vertex[1] = tempVertex[indexData[begin + 1]];
+		triangles[i].vertex[2] = tempVertex[indexData[begin + 2]];
 	}
-	delete[] processedVertex;
-
+	delete[] tempVertex;*/
+	
 	//todo-clip
-
+	if (!clipLineByCohSuthIn3D(tempVertex[2].pos, tempVertex[0].pos))
+		return;
+	
 	std::vector<Fragment> fragments;
 	std::vector<Vec2i> pixels;
+	
+	m_rasterizer->rasterizeLine(tempVertex[2], tempVertex[0], fragments, pixels);
+	delete[] tempVertex;
 
+	size_t fragmentSize = fragments.size();
+	Vec3f* fragmentOut = new Vec3f();
+	for (size_t j = 0; j < fragmentSize; ++j)
+	{
+		m_fragmentShader(fragments[j], fragmentOut);
+		outputToRenderTarget(pixels[j], *fragmentOut, hdc);
+	}
+
+	fragments.clear();
+	pixels.clear();
+	delete fragmentOut;
+	/*
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
 		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
@@ -110,5 +127,5 @@ void RenderContext::draw(HDC& hdc)
 		delete fragmentOut;
 	}
 
-	delete[] triangles;
+	delete[] triangles;*/
 }

@@ -2,6 +2,7 @@
 #include <vector>
 #include "Buffer.h"
 #include "Rasterizer.h"
+#include "Clipper.h"
 
 class RenderContext
 {

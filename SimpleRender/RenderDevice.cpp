@@ -664,28 +664,28 @@ void RenderDevice::lineClipCohSuth(const Vec2i& winMin, const Vec2i& winMax, Vec
 
 				if (p2.x != p1.x)
 					m = (p2.y - p1.y) / (p2.x - p1.x);
-				if (code1 & winLeftBitCode)
+				if (code1 & ViewportLeftBitCode)
 				{
 					p1.y += (winMin.x - p1.x) * m;
 					p1.x = winMin.x;
 				}
 				else
 				{
-					if (code1 & winRightBitCode)
+					if (code1 & ViewportRightBitCode)
 					{
 						p1.y += (winMax.x - p1.x) * m;
 						p1.x = winMax.x;
 					}
 					else
 					{
-						if (code1 & winBottomBitCode)
+						if (code1 & ViewportBottomBitCode)
 						{
 							p1.x += (winMin.y - p1.y) / m;
 							p1.y = winMin.y;
 						}
 						else
 						{
-							if (code1 & winTopBitCode)
+							if (code1 & ViewportTopBitCode)
 							{
 								p1.x += (winMax.y - p1.y) / m;
 								p1.y = winMax.y;
