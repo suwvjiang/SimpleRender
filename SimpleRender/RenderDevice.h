@@ -6,14 +6,6 @@
 #include "RenderContext.h"
 #include "Buffer.h"
 
-typedef enum Boundary
-{
-	Left,
-	Right,
-	Bottom,
-	Top,
-};
-
 class RenderDevice
 {
 private:
@@ -25,13 +17,12 @@ private:
 
 	HDC screenHDC = NULL;
 
-	Camera m_camera;
-	Viewport m_viewPort;
-
 	std::shared_ptr<RenderContext> m_context3D;
 	std::shared_ptr<Buffer> m_vertexBuffer;
 	std::shared_ptr<Buffer> m_indexBuffer;
+	std::shared_ptr<Camera> m_camera;
 
+	Viewport m_viewPort;
 	float m_angle = 0;
 	float m_radius = 100;
 	Vec3f m_origin;

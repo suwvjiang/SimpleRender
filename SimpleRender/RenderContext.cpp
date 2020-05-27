@@ -71,7 +71,7 @@ void RenderContext::draw(HDC& hdc)
 	{
 		m_vertexShader(vertexData[i], tempVertex[i]);
 	}
-	/*
+	
 	//构建三角形
 	size_t triangleNum = m_indexBuffer->getNumOfEle() / 3;
 	size_t* indexData = static_cast<size_t*>(m_indexBuffer->getData());
@@ -84,16 +84,20 @@ void RenderContext::draw(HDC& hdc)
 		triangles[i].vertex[1] = tempVertex[indexData[begin + 1]];
 		triangles[i].vertex[2] = tempVertex[indexData[begin + 2]];
 	}
-	delete[] tempVertex;*/
+	delete[] tempVertex;
 	
 	//todo-clip
-	if (!clipLineByLiangBarskIn3D(tempVertex[2].pos, tempVertex[0].pos))
-		return;
-	
+	//if (!clipLineByLiangBarskIn3D(tempVertex[0].pos, tempVertex[2].pos))
+		//return;
+
+	std::vector<Triangle> tempTriangles;
+	clipTriangleBySuthHodgIn3D(triangles[3], tempTriangles);
+
 	std::vector<Fragment> fragments;
 	std::vector<Vec2i> pixels;
 	
-	m_rasterizer->rasterizeLine(tempVertex[2], tempVertex[0], fragments, pixels);
+	/*clip line
+	m_rasterizer->rasterizeLine(tempVertex[0], tempVertex[2], fragments, pixels);
 	delete[] tempVertex;
 
 	size_t fragmentSize = fragments.size();
@@ -106,12 +110,13 @@ void RenderContext::draw(HDC& hdc)
 
 	fragments.clear();
 	pixels.clear();
-	delete fragmentOut;
-	/*
+	delete fragmentOut;*/
+	
+	triangleNum = tempTriangles.size();
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
-		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
-		//m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
+		m_rasterizer->rasterizeBorder(tempTriangles[i], fragments, pixels);
+		//m_rasterizer->rasterize(tempTriangles[i], fragments, pixels, m_depthBuffer);
 
 		size_t fragmentSize = fragments.size();
 		Vec3f* fragmentOut = new Vec3f();
@@ -127,5 +132,5 @@ void RenderContext::draw(HDC& hdc)
 		delete fragmentOut;
 	}
 
-	delete[] triangles;*/
+	delete[] triangles;
 }

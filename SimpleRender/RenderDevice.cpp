@@ -12,6 +12,7 @@ RenderDevice::~RenderDevice()
 	m_context3D = nullptr;
 	m_vertexBuffer = nullptr;
 	m_indexBuffer = nullptr;
+	m_camera = nullptr;
 }
 
 bool RenderDevice::isInited()
@@ -32,23 +33,24 @@ void RenderDevice::initDevice(HDC& hdc, int width, int height)
 	for (int i = 0; i < cnt; ++i)
 		depthBuffer[i] = 1.0f;
 
-	m_viewPort.width = width;
-	m_viewPort.height = height;
+	m_viewPort.width = width- 100;
+	m_viewPort.height = height - 100;
 	m_viewPort.originX = width >> 1;
 	m_viewPort.originY = height >> 1;
 
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(m_viewPort);
 
+	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
-	float fov = PI * 3 / 9, aspect = 1.0;
+	float fov = PI * 0.5, aspect = 1.0;
 	float zNear = -1, zFar = -1000;
-	m_camera.setViewInfo(fov, aspect, zNear, zFar);
+	m_camera->setViewInfo(fov, aspect, zNear, zFar);
 
 	m_origin.x = width >> 1;
 	m_origin.y = (height >> 1);
 	m_origin.z = 0;
-	m_camera.setFocusPos(m_origin);
+	m_camera->setFocusPos(m_origin);
 	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin);
 
 	initMeshInfo();
@@ -71,10 +73,10 @@ void RenderDevice::update()
 	m_angle += PI / Rotate_Speed;
 	Vec3f pos(m_radius * sin(m_angle), 0, m_radius * cos(m_angle));
 	pos += m_origin;
-	m_camera.setPos(pos);
-	m_camera.update();
+	m_camera->setPos(pos);
+	m_camera->update();
 
-	ShaderStruct::constBuffer.view_proj = m_camera.viewProjMatrix();
+	ShaderStruct::constBuffer.view_proj = m_camera->viewProjMatrix();
 }
 //绘制
 void RenderDevice::drawcall()
@@ -88,7 +90,7 @@ void RenderDevice::drawcall()
 	//drawTrangleByHalfSpace(Vec2i(100, 100), Vec2i(300, 100), Vec2i(200, 300), Color_Red, Color_Green, Color_Blue);
 	//matrixDisplay3D();
 	
-	m_context3D->clearDepthBuffer();
+	//m_context3D->clearDepthBuffer();
 	m_context3D->setIndexBuffer(m_indexBuffer);
 	m_context3D->setVertexBuffer(m_vertexBuffer);
 
@@ -749,9 +751,9 @@ void RenderDevice::testLineClip()
 const int nClip = 4;
 
 //是否在边界区域内
-int RenderDevice::checkPtInside(Vec2i& p, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
+int RenderDevice::checkPtInside(Vec2i& p, Boundary edge, const Vec2i& winMin, const Vec2i& winMax)
 {
-	switch (edeg)
+	switch (edge)
 	{
 	case Left:
 		if (p.x < winMin.x)return (false);
@@ -760,32 +762,32 @@ int RenderDevice::checkPtInside(Vec2i& p, Boundary edeg, const Vec2i& winMin, co
 		if (p.x > winMax.x)return (false);
 		break;
 	case Bottom:
-		if (p.y < winMin.y)return (false);
+		if (p.y > winMax.y)return (false);
 		break;
 	case Top:
-		if (p.y > winMax.y)return (false);
+		if (p.y < winMin.y)return (false);
 		break;
 	}
 	return (true);
 }
 
 //是否穿过边界
-int RenderDevice::checkCross(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
+int RenderDevice::checkCross(Vec2i& p1, Vec2i& p2, Boundary edge, const Vec2i& winMin, const Vec2i& winMax)
 {
-	if (checkPtInside(p1, edeg, winMin, winMax) == checkPtInside(p2, edeg, winMin, winMax))
+	if (checkPtInside(p1, edge, winMin, winMax) == checkPtInside(p2, edge, winMin, winMax))
 		return false;
 	else
 		return true;
 }
 
 //获取边界交点
-Vec2i RenderDevice::intersect(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax)
+Vec2i RenderDevice::intersect(Vec2i& p1, Vec2i& p2, Boundary edge, const Vec2i& winMin, const Vec2i& winMax)
 {
 	Vec2i iPt;
 	float m = 1.0f;
 
 	if (p1.x != p2.x) m = float(p2.y - p1.y) / (p2.x - p1.x);
-	switch (edeg)
+	switch (edge)
 	{
 	case Left:
 		iPt.x = winMin.x;
@@ -796,13 +798,13 @@ Vec2i RenderDevice::intersect(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& 
 		iPt.y = p2.y + (winMax.x - p2.x) * m;
 		break;
 	case Bottom:
-		iPt.y = winMin.y;
-		if (p1.x != p2.x) iPt.x = p2.x + (winMin.y - p2.y) / m;
+		iPt.y = winMax.y;
+		if (p1.x != p2.x) iPt.x = p2.x + (winMax.y - p2.y) / m;
 		else iPt.x = p2.x;
 		break;
 	case Top:
-		iPt.y = winMax.y;
-		if (p1.x != p2.x)iPt.x = p2.x + (winMax.y - p2.y) / m;
+		iPt.y = winMin.y;
+		if (p1.x != p2.x)iPt.x = p2.x + (winMin.y - p2.y) / m;
 		else iPt.x = p2.x;
 		break;
 	default:
@@ -811,21 +813,23 @@ Vec2i RenderDevice::intersect(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& 
 	return iPt;
 }
 
-void RenderDevice::clipPoint(Vec2i& p, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax, Vec2i* pOut, int* cnt, Vec2i* first[], Vec2i* last)
+//此处算法有问题。当p点位于right和top的边界交点时，
+//checkCross时，会判断p点与边界相交，且交点仍然为p点,
+//这样，p点会在checkCross的判定中添加到输出列表
+//紧接着又在接下来的checkPtInside里，也判定通过，又一次添加到输出列表中。
+void RenderDevice::clipPoint(Vec2i& p, Boundary edge, const Vec2i& winMin, const Vec2i& winMax, Vec2i* pOut, int* cnt, Vec2i* first[], Vec2i* last)
 {
 	Vec2i iPt;
-	if (!first[edeg])
-	{
-		first[edeg] = new Vec2i(p.x, p.y);
-	}
+	if (!first[edge])
+		first[edge] = new Vec2i(p.x, p.y);
 	else
 	{
-		if (checkCross(p, last[edeg], edeg, winMin, winMax))//与边界相交
+		if (checkCross(p, last[edge], edge, winMin, winMax))//与边界相交
 		{
-			iPt = intersect(p, last[edeg], edeg, winMin, winMax);
-			if (edeg < Top)
-				clipPoint(iPt, Boundary(edeg + 1), winMin, winMax, pOut, cnt, first, last);
-			else
+			iPt = intersect(p, last[edge], edge, winMin, winMax);
+			if (edge < Top)
+				clipPoint(iPt, Boundary(edge + 1), winMin, winMax, pOut, cnt, first, last);
+			else if((p-iPt).lengthSqr() > 0.00001)//避免p==ipt时，重复添加到输出列表
 			{
 				pOut[*cnt] = iPt;
 				(*cnt)++;
@@ -833,12 +837,12 @@ void RenderDevice::clipPoint(Vec2i& p, Boundary edeg, const Vec2i& winMin, const
 		}
 	}
 
-	last[edeg] = p;
+	last[edge] = p;
 
-	if (checkPtInside(p, edeg, winMin, winMax))//边界以内的点
+	if (checkPtInside(p, edge, winMin, winMax))//边界以内的点
 	{
-		if (edeg < Top)
-			clipPoint(p, Boundary(edeg + 1), winMin, winMax, pOut, cnt, first, last);
+		if (edge < Top)
+			clipPoint(p, Boundary(edge + 1), winMin, winMax, pOut, cnt, first, last);
 		else
 		{
 			pOut[*cnt] = p;
@@ -883,12 +887,12 @@ int RenderDevice::polygonClipSuthHodg(const Vec2i& winMin, const Vec2i& winMax, 
 void RenderDevice::testPolygonClip()
 {
 	Vec2i winMin, winMax;
-	winMin.x = 300; winMin.y = 200;
-	winMax.x = 500; winMax.y = 400;
+	winMin.x = 100; winMin.y = 100;
+	winMax.x = 300; winMax.y = 300;
 	drawClipArea(winMin, winMax);
 
 	int nVerts = 3;
-	Vec2i p1(250.0, 250.0), p2(550.0, 250.0), p3(400.0, 450.0);
+	Vec2i p1(50, 350), p2(50, 50), p3(350, 50);
 	Vec2i verts[3] = { p1, p2, p3 };
 
 	drawTrangleBorder(nVerts, verts);
@@ -1012,11 +1016,11 @@ void RenderDevice::matrixDisplay3D()
 	//identity Camera Matrix
 	Vec3f cameraPos(300 * sin(m_angle), 0, 300 * cos(m_angle));
 	cameraPos += origin;
-	m_camera.setPos(cameraPos);
-	m_camera.setFocusPos(origin);
-	m_camera.update();
+	m_camera->setPos(cameraPos);
+	m_camera->setFocusPos(origin);
+	m_camera->update();
 	
-	TransformVectors(nVerts, verts, m_camera.viewProjMatrix());
+	TransformVectors(nVerts, verts, m_camera->viewProjMatrix());
 
 	//到此为止，为Clipp Space
 	//唯有齐次以后，方为NDC Space

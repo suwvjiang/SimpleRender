@@ -10,8 +10,20 @@ const int ViewportLeftBitCode = 0x1;
 const int ViewportRightBitCode = 0x2;
 const int ViewportBottomBitCode = 0x4;
 const int ViewportTopBitCode = 0x8;
-const int ViewportNearBitCode = 0x10;
-const int ViewportFarBitCode = 0x20;
+const int ViewportFarBitCode = 0x10;
+const int ViewportNearBitCode = 0x20;
+
+typedef enum Boundary
+{
+	Left,
+	Right,
+	Bottom,
+	Top,
+	Far,
+	Near,
+};
+
+const int ClipEdgeMax = 6;
 
 inline bool inside(int code) {
 	return code == ViewportInsideBitCode;
@@ -162,10 +174,11 @@ inline bool clipLineByCohSuthIn3D(Vec4f& v0, Vec4f& v1)
 	}
 }
 //梁友栋
+//参考http://web.cs.wpi.edu/~emmanuel/courses/cs4731/A14/slides/lecture23.pdf
 inline bool clipLineByLiangBarskIn3D(Vec4f& v0, Vec4f& v1)
 {
 	float uIn = 0, uOut = 1, delta;
-	float p0[6] = { v0.w + v0.x, v0.w - v0.x, v0.w + v0.y, v0.w - v0.y, v0.w + v0.z, v0.w - v0.z };
+	float p0[6] = { v0.w + v0.x, v0.w - v0.x, v0.w + v0.y, v0.w - v0.y, v0.w + v0.z, v0.w - v0.z };//left:(x<-w)---->(w+x)<0, right:(w<x)--->(w-x)<0
 	float p1[6] = { v1.w + v1.x, v1.w - v1.x, v1.w + v1.y, v1.w - v1.y, v1.w + v1.z, v1.w - v1.z };
 
 	int code0 = encode(v0);
@@ -193,11 +206,230 @@ inline bool clipLineByLiangBarskIn3D(Vec4f& v0, Vec4f& v1)
 			return false;
 	}
 
+	Vec4f deltaV = v1 - v0;
 	if (code1 != ViewportInsideBitCode)
-		v1 = v0 + (v1 - v0) * uOut;
+		v1 = v0 + deltaV * uOut;
 	if (code0 != ViewportInsideBitCode)
-		v0 += (v1 - v0) * uIn;
+		v0 += deltaV * uIn;
 	return true;
 }
 
+//判断是否在边界内
+inline bool checkVertexInside(const Fragment& vert, Boundary edge)
+{
+	switch (edge)
+	{
+	case Left:
+		if(vert.pos.w + vert.pos.x < 0)
+			return false;
+		break;
+	case Right:
+		if (vert.pos.w - vert.pos.x < 0)
+			return false;
+		break;
+	case Bottom:
+		if (vert.pos.w + vert.pos.y < 0)
+			return false;
+		break;
+	case Top:
+		if (vert.pos.w - vert.pos.y < 0)
+			return false;
+		break;
+	case Far:
+		if (vert.pos.w + vert.pos.z < 0)
+			return false;
+		break;
+	case Near:
+		if (vert.pos.w - vert.pos.z < 0)
+			return false;
+		break;
+	}
+	return true;
+}
+//线段是否穿过边界
+inline bool checkVertexCross(const Fragment& vert0, const Fragment& vert1, Boundary edge)
+{
+	return checkVertexInside(vert0, edge) ^ checkVertexInside(vert1, edge);
+}
+//获取交点的位置
+inline float getIntersect(const Fragment& vert0, const Fragment& vert1, Boundary edge)
+{
+	float p0, p1;
+	switch (edge)
+	{
+	case Left:
+		p0 = vert0.pos.w + vert0.pos.x;
+		p1 = vert1.pos.w + vert1.pos.x;
+		break;
+	case Right:
+		p0 = vert0.pos.w - vert0.pos.x;
+		p1 = vert1.pos.w - vert1.pos.x;
+		break;
+	case Bottom:
+		p0 = vert0.pos.w + vert0.pos.y;
+		p1 = vert1.pos.w + vert1.pos.y;
+		break;
+	case Top:
+		p0 = vert0.pos.w - vert0.pos.y;
+		p1 = vert1.pos.w - vert1.pos.y;
+		break;
+	case Far:
+		p0 = vert0.pos.w + vert0.pos.z;
+		p1 = vert1.pos.w + vert1.pos.z;
+		break;
+	case Near:
+		p0 = vert0.pos.w - vert0.pos.z;
+		p1 = vert1.pos.w - vert1.pos.z;
+		break;
+	}
+	return p0 / (p0 - p1);
+}
+//设置交点的顶点数据
+inline void setIntersectFragment(const Fragment& vert0, const Fragment& vert1, float t, Fragment& dest)
+{
+	dest.pos = Lerp(vert0.pos, vert1.pos, t);
+}
+
+//逐点逐边裁剪
+inline void clipVertex(const Fragment& vert, Boundary edge, std::vector<Fragment>& outFrags, std::vector<Fragment*>& first, std::vector<Fragment>& last)
+{
+	Fragment frag;
+	if (!first[edge])
+		first[edge] = new Fragment(vert);
+	else
+	{
+		if (checkVertexCross(vert, last[edge], edge))
+		{
+			float t = getIntersect(vert, last[edge], edge);
+			setIntersectFragment(vert, last[edge], t, frag);
+
+			if (edge < Near)
+				clipVertex(frag, Boundary(edge + 1), outFrags, first, last);
+			else
+				outFrags.emplace_back(frag);
+		}
+	}
+
+	last[edge] = vert;
+
+	if (checkVertexInside(vert, edge))
+	{
+		if (edge < Near)
+			clipVertex(vert, Boundary(edge + 1), outFrags, first, last);
+		else
+			outFrags.emplace_back(vert);
+	}
+}
+//打完收工
+inline void closeClip(std::vector<Fragment>& outFrags, std::vector<Fragment*>& first, std::vector<Fragment>& last)
+{
+	Fragment frag;
+	for (int edge = Left; edge <= Near; ++edge)
+	{
+		if (checkVertexCross(last[edge], *first[edge], Boundary(edge)))
+		{
+			float t = getIntersect(last[edge], *first[edge], Boundary(edge));
+			setIntersectFragment(last[edge], *first[edge], t, frag);
+
+			if (edge < Near)
+				clipVertex(frag, Boundary(edge + 1), outFrags, first, last);
+			else
+				outFrags.emplace_back(frag);
+		}
+	}
+}
+
+inline void clipTriangleBySuthHodgIn3D(const Triangle& triangle, std::vector<Triangle>& destTriangles)
+{
+	std::vector<Fragment> outFrags;
+	std::vector<Fragment*> first(ClipEdgeMax, 0);
+	std::vector<Fragment> lastFrags(ClipEdgeMax);
+
+	int k = 0;
+	for (k = 0; k < 3; ++k)
+	{
+		clipVertex(triangle.vertex[k], Left, outFrags, first, lastFrags);
+	}
+
+	closeClip(outFrags, first, lastFrags);
+
+	if (outFrags.size() == 0)
+		return;
+
+	//重构三角形
+	size_t triNum = outFrags.size() - 2;
+	for (size_t i = 0; i < triNum; ++i)
+	{
+		size_t j = (i + 1) % outFrags.size();
+		size_t k = (i + 2) % outFrags.size();
+
+		Triangle reTri;
+		reTri.vertex[0] = outFrags[0];
+		reTri.vertex[1] = outFrags[j];
+		reTri.vertex[2] = outFrags[k];
+
+		destTriangles.emplace_back(reTri);
+	}
+}
+
+//循环之法，可以避免经过边界交点的线段被重复添加
+inline void clipTriangle(const Triangle& triangle, std::vector<Triangle>& destTriangles)
+{
+	size_t num;
+	bool code0, code1;
+
+	std::vector<Fragment> outFrags(triangle.vertex, triangle.vertex + 3);
+	std::vector<Fragment> inFrags;
+	for (int edge = Left; edge <= Near; ++edge)
+	{
+		inFrags = outFrags;
+		outFrags.clear();
+
+		num = inFrags.size();
+		for (size_t i = 0; i < num; ++i)
+		{
+			size_t k = (i + 1) % num;
+
+			code0 = checkVertexInside(inFrags[i], Boundary(edge));
+			code1 = checkVertexInside(inFrags[k], Boundary(edge));
+
+			if (code0 && code1)
+				outFrags.emplace_back(inFrags[k]);
+			else if (!code0 && code1)
+			{
+				float t = getIntersect(inFrags[i], inFrags[k], Boundary(edge));
+				Fragment newFrag;
+				setIntersectFragment(inFrags[i], inFrags[k], t, newFrag);
+				outFrags.emplace_back(newFrag);
+
+				outFrags.emplace_back(inFrags[k]);
+			}
+			else if (code0 && !code1)
+			{
+				float t = getIntersect(inFrags[i], inFrags[k], Boundary(edge));
+				Fragment newFrag;
+				setIntersectFragment(inFrags[i], inFrags[k], t, newFrag);
+				outFrags.emplace_back(newFrag);
+			}
+		}
+	}
+
+	if (outFrags.size() == 0)
+		return;
+
+	//重构三角形
+	size_t triNum = outFrags.size() - 2;
+	for (size_t i = 0; i < triNum; ++i)
+	{
+		size_t j = (i + 1) % outFrags.size();
+		size_t k = (i + 2) % outFrags.size();
+
+		Triangle reTri;
+		reTri.vertex[0] = outFrags[0];
+		reTri.vertex[1] = outFrags[j];
+		reTri.vertex[2] = outFrags[k];
+
+		destTriangles.emplace_back(reTri);
+	}
+}
 #pragma endregion

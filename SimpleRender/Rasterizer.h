@@ -76,6 +76,7 @@ struct Vertex
 struct Fragment
 {
 	Fragment() {};
+	Fragment(const Fragment& _frag) :pos(_frag.pos), color(_frag.color) {};
 	Fragment(const Vec3f& _col) :color(_col) {};
 
 	Vec4f pos;
@@ -218,7 +219,7 @@ public:
 					depth = triangle.vertex[0].pos.z * param0;
 					depth += triangle.vertex[1].pos.z * param1;
 					depth += triangle.vertex[2].pos.z * param2;
-					if (depth > depthBuffer[index])
+					//if (depth > depthBuffer[index])
 					{
 						depthBuffer[index] = depth;
 
@@ -336,8 +337,8 @@ private:
 	Vec2i NDCToViewport(const Vec4f pos, const Viewport& viewport)
 	{
 		Vec2i screenPos;
-		screenPos.x = pos.x * viewport.width + viewport.originX;
-		screenPos.y = viewport.originY - pos.y * viewport.height;
+		screenPos.x = pos.x * (viewport.width >> 1) + viewport.originX;
+		screenPos.y = viewport.originY - pos.y * (viewport.height >> 1);
 		return screenPos;
 	}
 
