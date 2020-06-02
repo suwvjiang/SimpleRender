@@ -15,7 +15,7 @@ private:
 	int winWidth, winHeight;
 	float depthBuffer[160000];
 
-	HDC screenHDC = NULL;
+	BYTE* m_fragmentBuff = NULL;
 
 	std::shared_ptr<RenderContext> m_context3D;
 	std::shared_ptr<Buffer> m_vertexBuffer;
@@ -24,15 +24,20 @@ private:
 
 	Viewport m_viewPort;
 	float m_angle = 0;
-	float m_radius = 100;
+	float m_radius = 150;
 	Vec3f m_origin;
 
 public:
 	RenderDevice();
 	~RenderDevice();
 
+	BYTE* getFragmentBuffer() 
+	{
+		return m_fragmentBuff;
+	}
+
 	bool isInited();
-	void initDevice(HDC& hdc, int width, int height);
+	void initDevice(int width, int height);
 	void releaseDevice();
 	void clear();
 	void update();
@@ -79,9 +84,21 @@ public:
 	void testPolygonClip();
 #pragma endregion
 
-	void drawClipArea(const Vec2i& winMin, const Vec2i& winMax);
+	void drawViewportArea(const Vec2i& winMin, const Vec2i& winMax);
 	Vec2i NDCToScreenSpace(const Vec4f pos, const int& width, const int& height, const Vec2i& center);
 	void rasterizeTrangle(const Vec4f& v0, const Vec4f& v1, const Vec4f& v2, const Vec3f& col0, const Vec3f& col1, const Vec3f& col2);
 	void matrixDisplay3D();
+
+private:
+	inline void drawPixel(int x, int y, const Vec3f& color)
+	{
+		if (NULL == m_fragmentBuff) return;
+		if (x < 0 || y < 0) return;
+		if (y * winWidth * 3 + x * 3 + 3 > winWidth * winHeight* PIX_BITS / 8) return;
+
+		m_fragmentBuff[y * winWidth * 3 + x * 3 + 1] = color.g;
+		m_fragmentBuff[y * winWidth * 3 + x * 3 + 2] = color.r;
+		m_fragmentBuff[y * winWidth * 3 + x * 3 + 3] = color.b;
+	}
 };
 

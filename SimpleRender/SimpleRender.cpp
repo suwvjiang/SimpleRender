@@ -5,14 +5,21 @@
 #include "stdfx.h"
 #include "RenderDevice.h"
 
+#define SCREEN_WIDTH 400
+#define SCREEN_HEIGHT 400
+
 static const int windowWidth = 400;
 static const int windowHeight = 400;
 const char* windowTitle = "Simple Render";
 
 bool inited = false;
-HDC hdc = NULL;
-HDC screenHDC = NULL;
 std::shared_ptr<RenderDevice> device;
+
+BITMAPINFO* mBitmapInfo = NULL;
+HDC mScreenHDC;
+HDC mCompatibleDC;
+HBITMAP mOldBitmap;
+HBITMAP mCompatibleBitmap;
 HWND handler = NULL;
 
 static LRESULT OnEvent(HWND, UINT, WPARAM, LPARAM);
@@ -31,19 +38,23 @@ void initWindow()
 	if (handler == NULL)
 		return;
 
-	hdc = GetDC((handler));
-	screenHDC = CreateCompatibleDC(hdc);
+	mBitmapInfo = new BITMAPINFO();
+	ZeroMemory(mBitmapInfo, sizeof(BITMAPINFO));
 
-	BITMAPINFO bitmapInfo = { { sizeof(BITMAPINFOHEADER),windowWidth, windowHeight, 1, 32, BI_RGB, windowWidth * windowHeight * 4, 0, 0, 0, 0 } };
-	LPVOID ptr;
-	//创建设备无关的位图
-	HBITMAP bitmapHandler = CreateDIBSection(screenHDC, &bitmapInfo, DIB_RGB_COLORS, &ptr, 0, 0);
-	if (bitmapHandler == NULL)
-		return;
+	mBitmapInfo->bmiHeader.biBitCount = PIX_BITS;
+	mBitmapInfo->bmiHeader.biCompression = BI_RGB;
+	mBitmapInfo->bmiHeader.biHeight = -windowHeight;
+	mBitmapInfo->bmiHeader.biPlanes = 1;
+	mBitmapInfo->bmiHeader.biSizeImage = 0;
+	mBitmapInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	mBitmapInfo->bmiHeader.biWidth = windowWidth;
 
-	HBITMAP screenObject = (HBITMAP)SelectObject(screenHDC, bitmapHandler);
+	mScreenHDC = GetDC((handler));
+	mCompatibleDC = CreateCompatibleDC(mScreenHDC);
+	mCompatibleBitmap = CreateCompatibleBitmap(mScreenHDC, windowWidth, windowHeight);
+	mOldBitmap = (HBITMAP)SelectObject(mCompatibleDC, mCompatibleBitmap);
 
-	SetWindowPos(handler, NULL, 300, 200, windowWidth, windowHeight, (SWP_NOCOPYBITS | SWP_NOZORDER | SWP_SHOWWINDOW));
+	SetWindowPos(handler, NULL, 200, 200, windowWidth, windowHeight, (SWP_NOCOPYBITS | SWP_NOZORDER | SWP_SHOWWINDOW));
 
 	ShowWindow(handler, SW_NORMAL);
 	UpdateWindow(handler);
@@ -52,7 +63,7 @@ void initWindow()
 void initRender()
 {
 	device = std::make_shared<RenderDevice>();
-	device->initDevice(screenHDC, windowWidth, windowHeight);
+	device->initDevice(windowWidth, windowHeight);
 }
 
 void doRender()
@@ -61,8 +72,8 @@ void doRender()
 	device->update();
 	device->drawcall();
 
-	//双缓冲
-	BitBlt(hdc, 0, 0, windowWidth, windowHeight, screenHDC, 0, 0, SRCCOPY);
+	SetDIBits(mScreenHDC, mCompatibleBitmap, 0, windowHeight, device->getFragmentBuffer(), mBitmapInfo, DIB_RGB_COLORS);
+	BitBlt(mScreenHDC, -1, -1, windowWidth, windowHeight, mCompatibleDC, 0, 0, SRCCOPY);
 }
 
 void showFPS()
@@ -84,7 +95,7 @@ void showFPS()
 
 	char strBuffer[40];
 	sprintf_s(strBuffer, 40, "fps:%0.3f", fps);
-	TextOut(hdc, 0, 0, strBuffer, 9);
+	TextOut(mScreenHDC, 0, 0, strBuffer, 9);
 }
 
 void update()

@@ -10,7 +10,7 @@ public:
 	RenderContext();
 	~RenderContext();
 
-	void setViewport(const Viewport& view);
+	void setViewport(int width, int height, const Viewport& view);
 	Viewport getViewport() const;
 
 	void setVertexBuffer(std::shared_ptr<Buffer> vBuffer);
@@ -20,9 +20,11 @@ public:
 	void setFragmentShader(FragmentShader fs);
 
 	void clearDepthBuffer();
-	void draw(HDC& hdc);
+	void draw(BYTE* buffer);
 
 private:
+
+	int m_width, m_height;
 	Viewport m_viewport;
 	VertexShader m_vertexShader;
 	FragmentShader m_fragmentShader;
@@ -32,9 +34,15 @@ private:
 	std::shared_ptr<Buffer> m_indexBuffer;
 	std::vector<float> m_depthBuffer;
 
-	void outputToRenderTarget(const Vec2i& pixel, const Vec3f& color, HDC& target)
+	inline void outputToRenderTarget(const Vec2i& pixel, const Vec3f& color, BYTE* buffer)
 	{
-		SetPixel(target, pixel.x, pixel.y, RGB(255 * color.r, 255 * color.g, 255 * color.b));
+		if (NULL == buffer) return;
+		if (pixel.x < 0 || pixel.y < 0) return;
+		if (pixel.y * m_width * 3 + pixel.x * 3 + 3 > m_width * m_height* PIX_BITS / 8) return;
+
+		buffer[pixel.y * m_width * 3 + pixel.x * 3 + 1] = color.g*255;
+		buffer[pixel.y * m_width * 3 + pixel.x * 3 + 2] = color.r*255;
+		buffer[pixel.y * m_width * 3 + pixel.x * 3 + 3] = color.b*255;
 	}
 };
 

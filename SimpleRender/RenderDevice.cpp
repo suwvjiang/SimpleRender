@@ -20,9 +20,10 @@ bool RenderDevice::isInited()
 	return m_inited;
 }
 
-void RenderDevice::initDevice(HDC& hdc, int width, int height)
+void RenderDevice::initDevice(int width, int height)
 {
-	screenHDC = hdc;
+	m_fragmentBuff = new BYTE[width * height * PIX_BITS / 8];
+	memset(m_fragmentBuff, 45, width * height * PIX_BITS / 8);
 
 	winWidth = width;
 	winHeight = height; 
@@ -33,13 +34,13 @@ void RenderDevice::initDevice(HDC& hdc, int width, int height)
 	for (int i = 0; i < cnt; ++i)
 		depthBuffer[i] = 1.0f;
 
-	m_viewPort.width = width- 100;
-	m_viewPort.height = height - 100;
+	m_viewPort.width = width-50;
+	m_viewPort.height = height-50;
 	m_viewPort.originX = width >> 1;
 	m_viewPort.originY = height >> 1;
 
 	m_context3D = std::make_shared<RenderContext>();
-	m_context3D->setViewport(m_viewPort);
+	m_context3D->setViewport(width, height, m_viewPort);
 
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
@@ -63,7 +64,7 @@ void RenderDevice::releaseDevice()
 
 void RenderDevice::clear()
 {
-	BitBlt(screenHDC, 0, 0, m_viewPort.width, m_viewPort.height, NULL, NULL, NULL, BLACKNESS);
+	memset(m_fragmentBuff, 45, winWidth * winHeight * PIX_BITS / 8);
 }
 
 const static float Rotate_Speed = 360.0;
@@ -89,15 +90,19 @@ void RenderDevice::drawcall()
 	//testPolygonClip();
 	//drawTrangleByHalfSpace(Vec2i(100, 100), Vec2i(300, 100), Vec2i(200, 300), Color_Red, Color_Green, Color_Blue);
 	//matrixDisplay3D();
+
+	Vec2i viewportMin = Vec2i(m_viewPort.originX - (m_viewPort.width >> 1), m_viewPort.originY - (m_viewPort.height >> 1));
+	Vec2i viewportMax = Vec2i(m_viewPort.originX + (m_viewPort.width >> 1), m_viewPort.originY + (m_viewPort.height >> 1));
+	drawViewportArea(viewportMin, viewportMax);
 	
-	//m_context3D->clearDepthBuffer();
+	m_context3D->clearDepthBuffer();
 	m_context3D->setIndexBuffer(m_indexBuffer);
 	m_context3D->setVertexBuffer(m_vertexBuffer);
 
 	m_context3D->setVertexShader(ShaderStruct::VS);
 	m_context3D->setFragmentShader(ShaderStruct::FS);
 
-	m_context3D->draw(screenHDC);
+	m_context3D->draw(m_fragmentBuff);
 }
 
 void RenderDevice::initMeshInfo()
@@ -185,7 +190,7 @@ std::shared_ptr<Buffer> RenderDevice::createBuffer(const BufferDesc& desc)
 #pragma region Raster Function
 void RenderDevice::drawPixel(int x, int y)
 {
-	SetPixel(screenHDC, x, y, RGB(255, 255, 255));
+	//SetPixel(mScreenHDC, x, y, RGB(255, 255, 255));
 }
 
 void RenderDevice::drawLineDDA(int x0, int y0, int xEnd, int yEnd)
@@ -550,7 +555,7 @@ void RenderDevice::drawPolygon(int nVerts, Vec2i* verts)
 //绘制彩点
 void RenderDevice::drawColorPixel(int x, int y, const Vec3f& col)
 {
-	SetPixel(screenHDC, x, y, RGB(255 * col.r, 255 * col.g, 255 * col.b));
+	//SetPixel(screenHDC, x, y, RGB(255 * col.r, 255 * col.g, 255 * col.b));
 }
 
 //绘制彩线
@@ -739,7 +744,7 @@ void RenderDevice::testLineClip()
 	Vec2i winMin, winMax;
 	winMin.x = 0; winMin.y = 0;
 	winMax.x = 100; winMax.y = 100;
-	drawClipArea(winMin, winMax);
+	drawViewportArea(winMin, winMax);
 
 	Vec2i p1, p2;
 	p1.x = -50; p1.y = -50;
@@ -889,7 +894,7 @@ void RenderDevice::testPolygonClip()
 	Vec2i winMin, winMax;
 	winMin.x = 100; winMin.y = 100;
 	winMax.x = 300; winMax.y = 300;
-	drawClipArea(winMin, winMax);
+	drawViewportArea(winMin, winMax);
 
 	int nVerts = 3;
 	Vec2i p1(50, 350), p2(50, 50), p3(350, 50);
@@ -904,7 +909,7 @@ void RenderDevice::testPolygonClip()
 
 #pragma endregion
 
-void RenderDevice::drawClipArea(const Vec2i& winMin, const Vec2i& winMax)
+void RenderDevice::drawViewportArea(const Vec2i& winMin, const Vec2i& winMax)
 {
 	drawLineBres(winMin.x, winMin.y, winMax.x, winMin.y);
 	drawLineBres(winMin.x, winMin.y, winMin.x, winMax.y);
@@ -916,8 +921,8 @@ void RenderDevice::drawClipArea(const Vec2i& winMin, const Vec2i& winMax)
 Vec2i RenderDevice::NDCToScreenSpace(const Vec4f pos, const int& width, const int& height, const Vec2i& center)
 {
 	Vec2i screenPos;
-	screenPos.x = pos.x / pos.w * width + center.x;
-	screenPos.y = pos.y / pos.w * height + center.y;
+	screenPos.x = pos.x / pos.w * (width >> 1) + center.x;
+	screenPos.y = pos.y / pos.w * (height >> 1) + center.y;
 	return screenPos;
 }
 

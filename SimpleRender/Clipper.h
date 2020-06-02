@@ -95,7 +95,7 @@ inline int encode(const Vec4f& vert)
 	int code = 0x0;
 	if (vert.x < -vert.w)
 		code |= ViewportLeftBitCode;
-	if (vert.w > vert.w)
+	if (vert.x > vert.w)
 		code |= ViewportRightBitCode;
 	if (vert.y < -vert.w)
 		code |= ViewportBottomBitCode;
@@ -288,6 +288,7 @@ inline float getIntersect(const Fragment& vert0, const Fragment& vert1, Boundary
 inline void setIntersectFragment(const Fragment& vert0, const Fragment& vert1, float t, Fragment& dest)
 {
 	dest.pos = Lerp(vert0.pos, vert1.pos, t);
+	dest.color = Lerp(vert0.color, vert1.color, t);
 }
 
 //逐点逐边裁剪
@@ -338,7 +339,7 @@ inline void closeClip(std::vector<Fragment>& outFrags, std::vector<Fragment*>& f
 		}
 	}
 }
-
+//递归之法，或有重复添加交互之嫌
 inline void clipTriangleBySuthHodgIn3D(const Triangle& triangle, std::vector<Triangle>& destTriangles)
 {
 	std::vector<Fragment> outFrags;
@@ -371,9 +372,8 @@ inline void clipTriangleBySuthHodgIn3D(const Triangle& triangle, std::vector<Tri
 		destTriangles.emplace_back(reTri);
 	}
 }
-
 //循环之法，可以避免经过边界交点的线段被重复添加
-inline void clipTriangle(const Triangle& triangle, std::vector<Triangle>& destTriangles)
+inline void clipTriangleByClassicIn3D(const Triangle& triangle, std::vector<Triangle>& destTriangles)
 {
 	size_t num;
 	bool code0, code1;
@@ -431,5 +431,45 @@ inline void clipTriangle(const Triangle& triangle, std::vector<Triangle>& destTr
 
 		destTriangles.emplace_back(reTri);
 	}
+}
+
+inline void CVVClip(Triangle** tris, size_t& cnt)
+{
+	std::vector<Triangle> clippedTris;
+
+	int code0, code1, code2, codeAnd, codeOr;
+	Triangle currTri;
+	for (size_t i = 0; i < cnt; ++i)
+	{
+		currTri = (*tris)[i];
+		
+		code0 = encode(currTri.vertex[0].pos);
+		code1 = encode(currTri.vertex[1].pos);
+		code2 = encode(currTri.vertex[2].pos);
+
+		codeAnd = code0 & code1 & code2;
+		codeOr = code0 | code1 | code2;
+
+		//跳出三界外，不在五行中
+		if (codeAnd != ViewportInsideBitCode)
+			continue;
+
+		if (codeOr == ViewportInsideBitCode)
+		{
+			clippedTris.emplace_back(currTri);
+			continue;
+		}
+
+		clipTriangleBySuthHodgIn3D(currTri, clippedTris);
+	}
+
+	size_t newCnt = clippedTris.size();
+	if (newCnt > cnt)
+	{
+		delete[](*tris);
+		(*tris) = new Triangle[newCnt];
+	}
+	cnt = newCnt;
+	std::memcpy((*tris), clippedTris.data(), cnt * sizeof(Triangle));
 }
 #pragma endregion

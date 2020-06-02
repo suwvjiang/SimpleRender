@@ -2,6 +2,9 @@
 #include <functional>
 #include "MathUtils.h"
 
+#define PIX_BITS 24
+
+
 //±ß½çÈ¨ÖØ
 struct EdgeEquation
 {
@@ -219,7 +222,7 @@ public:
 					depth = triangle.vertex[0].pos.z * param0;
 					depth += triangle.vertex[1].pos.z * param1;
 					depth += triangle.vertex[2].pos.z * param2;
-					//if (depth > depthBuffer[index])
+					if (depth > depthBuffer[index])
 					{
 						depthBuffer[index] = depth;
 

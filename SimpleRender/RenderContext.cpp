@@ -10,8 +10,11 @@ RenderContext::~RenderContext()
 	m_rasterizer = nullptr;
 }
 
-void RenderContext::setViewport(const Viewport& view)
+void RenderContext::setViewport(int width, int height, const Viewport& view)
 {
+	m_width = width;
+	m_height = height;
+
 	m_viewport = view;
 	m_rasterizer->setViewport(view);
 
@@ -55,7 +58,7 @@ void RenderContext::clearDepthBuffer()
 		m_depthBuffer[i] = -1.0;
 }
 
-void RenderContext::draw(HDC& hdc)
+void RenderContext::draw(BYTE* buffer)
 {
 	if ((m_vertexBuffer == nullptr)||(m_indexBuffer == nullptr))
 	{
@@ -90,8 +93,7 @@ void RenderContext::draw(HDC& hdc)
 	//if (!clipLineByLiangBarskIn3D(tempVertex[0].pos, tempVertex[2].pos))
 		//return;
 
-	std::vector<Triangle> tempTriangles;
-	clipTriangleBySuthHodgIn3D(triangles[3], tempTriangles);
+	CVVClip(&triangles, triangleNum);
 
 	std::vector<Fragment> fragments;
 	std::vector<Vec2i> pixels;
@@ -112,11 +114,10 @@ void RenderContext::draw(HDC& hdc)
 	pixels.clear();
 	delete fragmentOut;*/
 	
-	triangleNum = tempTriangles.size();
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
-		m_rasterizer->rasterizeBorder(tempTriangles[i], fragments, pixels);
-		//m_rasterizer->rasterize(tempTriangles[i], fragments, pixels, m_depthBuffer);
+		m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
+		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
 
 		size_t fragmentSize = fragments.size();
 		Vec3f* fragmentOut = new Vec3f();
@@ -124,7 +125,7 @@ void RenderContext::draw(HDC& hdc)
 		for (size_t j = 0; j < fragmentSize; ++j)
 		{
 			m_fragmentShader(fragments[j], fragmentOut);
-			outputToRenderTarget(pixels[j], *fragmentOut, hdc);
+			outputToRenderTarget(pixels[j], *fragmentOut, buffer);
 		}
 
 		fragments.clear();
