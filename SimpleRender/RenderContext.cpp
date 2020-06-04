@@ -90,34 +90,15 @@ void RenderContext::draw(BYTE* buffer)
 	delete[] tempVertex;
 	
 	//todo-clip
-	//if (!clipLineByLiangBarskIn3D(tempVertex[0].pos, tempVertex[2].pos))
-		//return;
-
 	CVVClip(&triangles, triangleNum);
 
 	std::vector<Fragment> fragments;
 	std::vector<Vec2i> pixels;
 	
-	/*clip line
-	m_rasterizer->rasterizeLine(tempVertex[0], tempVertex[2], fragments, pixels);
-	delete[] tempVertex;
-
-	size_t fragmentSize = fragments.size();
-	Vec3f* fragmentOut = new Vec3f();
-	for (size_t j = 0; j < fragmentSize; ++j)
-	{
-		m_fragmentShader(fragments[j], fragmentOut);
-		outputToRenderTarget(pixels[j], *fragmentOut, hdc);
-	}
-
-	fragments.clear();
-	pixels.clear();
-	delete fragmentOut;*/
-	
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
-		m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
 		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
+		m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
 
 		size_t fragmentSize = fragments.size();
 		Vec3f* fragmentOut = new Vec3f();

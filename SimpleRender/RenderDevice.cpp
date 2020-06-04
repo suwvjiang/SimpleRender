@@ -34,8 +34,8 @@ void RenderDevice::initDevice(int width, int height)
 	for (int i = 0; i < cnt; ++i)
 		depthBuffer[i] = 1.0f;
 
-	m_viewPort.width = width-50;
-	m_viewPort.height = height-50;
+	m_viewPort.width = width-100;
+	m_viewPort.height = height-100;
 	m_viewPort.originX = width >> 1;
 	m_viewPort.originY = height >> 1;
 

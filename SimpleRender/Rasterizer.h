@@ -98,6 +98,11 @@ struct Viewport
 	int originY;
 	int width;
 	int height;
+
+	int getLTX() { return originX - (width >> 1); }
+	int getLTY() { return originY - (height >> 1); }
+	int getRBX() { return originX + (width >> 1); }
+	int getRBY() { return originY + (height >> 1); }
 };
 //着色器
 struct ShaderStruct
@@ -175,18 +180,16 @@ public:
 		triangle.vertex[2].pos *= inv_camera_z[2];
 
 		Vec2i p0, p1, p2, p;
-		p0 = NDCToViewport(triangle.vertex[0].pos, m_viewPort);
-		p1 = NDCToViewport(triangle.vertex[1].pos, m_viewPort);
-		p2 = NDCToViewport(triangle.vertex[2].pos, m_viewPort);
+		p0 = NDCToScreen(triangle.vertex[0].pos, m_viewPort);
+		p1 = NDCToScreen(triangle.vertex[1].pos, m_viewPort);
+		p2 = NDCToScreen(triangle.vertex[2].pos, m_viewPort);
 
 		int minX, minY, maxX, maxY;
-		minX = max(min(min(p0.x, p1.x), p2.x), 0);
-		minY = max(min(min(p0.y, p1.y), p2.y), 0);
-		maxX = min(max(max(p0.x, p1.x), p2.x), m_viewPort.width);
-		maxY = min(max(max(p0.y, p1.y), p2.y), m_viewPort.height);
-		if (minX > maxX)
-			return;
-		if (minY > maxY)
+		minX = max(min(min(p0.x, p1.x), p2.x), m_viewPort.getLTX());
+		minY = max(min(min(p0.y, p1.y), p2.y), m_viewPort.getLTY());
+		maxX = min(max(max(p0.x, p1.x), p2.x), m_viewPort.getRBX());
+		maxY = min(max(max(p0.y, p1.y), p2.y), m_viewPort.getRBY());
+		if ((minX > maxX) || (minY > maxY))
 			return;
 
 		EdgeEquation area(p0, p1, p2);
@@ -199,7 +202,7 @@ public:
 		EdgeEquationSet tempX;
 
 		int i, j;
-		int index = minY * m_viewPort.width + minX;
+		int index = (minY - m_viewPort.getLTY()) * m_viewPort.width + (minX - m_viewPort.getLTX());
 		float z0, z1, z2;
 		float param0, param1, param2, cameraZ, depth;
 		for (j = minY; j < maxY; ++j)
@@ -255,9 +258,9 @@ public:
 		triangle.vertex[2].pos *= inv_camera_z[2];
 
 		Vec2i p0, p1, p2;
-		p0 = NDCToViewport(triangle.vertex[0].pos, m_viewPort);
-		p1 = NDCToViewport(triangle.vertex[1].pos, m_viewPort);
-		p2 = NDCToViewport(triangle.vertex[2].pos, m_viewPort);
+		p0 = NDCToScreen(triangle.vertex[0].pos, m_viewPort);
+		p1 = NDCToScreen(triangle.vertex[1].pos, m_viewPort);
+		p2 = NDCToScreen(triangle.vertex[2].pos, m_viewPort);
 
 		drawLineBres(p0, p1, frag, pixels);
 		drawLineBres(p0, p2, frag, pixels);
@@ -270,8 +273,8 @@ public:
 		v1.pos /= v1.pos.w;
 
 		Vec2i p0, p1;
-		p0 = NDCToViewport(v0.pos, m_viewPort);
-		p1 = NDCToViewport(v1.pos, m_viewPort);
+		p0 = NDCToScreen(v0.pos, m_viewPort);
+		p1 = NDCToScreen(v1.pos, m_viewPort);
 
 		drawLineBres(p0, p1, frag, pixels);
 	}
@@ -337,7 +340,7 @@ private:
 	}
 
 	//转成屏幕坐标
-	Vec2i NDCToViewport(const Vec4f pos, const Viewport& viewport)
+	Vec2i NDCToScreen(const Vec4f pos, const Viewport& viewport)
 	{
 		Vec2i screenPos;
 		screenPos.x = pos.x * (viewport.width >> 1) + viewport.originX;
