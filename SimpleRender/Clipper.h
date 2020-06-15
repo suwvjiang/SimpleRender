@@ -289,6 +289,7 @@ inline void setIntersectFragment(const Fragment& vert0, const Fragment& vert1, f
 {
 	dest.pos = Lerp(vert0.pos, vert1.pos, t);
 	dest.color = Lerp(vert0.color, vert1.color, t);
+	dest.uv = Lerp(vert0.uv, vert1.uv, t);
 }
 
 //ÖðµãÖð±ß²Ã¼ô

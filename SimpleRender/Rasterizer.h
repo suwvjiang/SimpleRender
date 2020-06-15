@@ -64,14 +64,20 @@ struct Vertex
 {
 	Vec3f pos;
 	Vec2f uv;
+	Vec3f normal;
 	Vec3f color;
 
 	Vertex() {};
-	Vertex(const Vec3f& _pos, const Vec2f& _uv, const Vec3f& _color):pos(_pos), uv(_uv), color(_color)
+	Vertex(const Vec3f& _pos, const Vec2f& _uv, const Vec3f& _normal, const Vec3f& _color)
+		:pos(_pos), uv(_uv), normal(_normal), color(_color)
 	{
 	}
+
 	Vertex(const float& x, const float& y, const float& z,
-		const float& r, const float& g, const float& b):pos(x, y, z), color(r, g, b)
+		const float& r, const float& g, const float& b,
+		const float& normalX, const float& normalY, const float& normalZ,
+		const float& u, const float& v)
+		:pos(x, y, z), color(r, g, b), uv(u, v), normal(normalX, normalY, normalZ)
 	{
 	}
 };
@@ -79,11 +85,12 @@ struct Vertex
 struct Fragment
 {
 	Fragment() {};
-	Fragment(const Fragment& _frag) :pos(_frag.pos), color(_frag.color) {};
+	Fragment(const Fragment& _frag) :pos(_frag.pos),uv(_frag.uv), normal(_frag.normal), color(_frag.color) {};
 	Fragment(const Vec3f& _col) :color(_col) {};
 
 	Vec4f pos;
 	Vec2f uv;
+	Vec3f normal;
 	Vec3f color;
 };
 //Èý½ÇÐÎ
@@ -121,11 +128,21 @@ struct ShaderStruct
 		Vec4f worldPos = Transform(constBuffer.world, pos);
 		output.pos = Transform(constBuffer.view_proj, worldPos);
 		output.color = input.color;
+		output.uv = input.uv;
 	}
 
 	inline static void FS(const Fragment& input, Vec3f* output)
 	{
 		(*output) = input.color;
+	}
+
+	inline static void TextFS(const Fragment& input, Vec3f* output)
+	{
+		int u = input.uv.x * 255;
+		int v = input.uv.y * 255;
+		u /= 32;
+		v /= 32;
+		(*output) = ((u + v) & 1) ? Color_White : Color_Blue;
 	}
 };
 
