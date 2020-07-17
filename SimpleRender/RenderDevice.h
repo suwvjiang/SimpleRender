@@ -24,7 +24,7 @@ private:
 
 	Viewport m_viewPort;
 	float m_angle = 0;
-	float m_radius = 200;
+	float m_radius = 3;
 	Vec3f m_origin;
 
 public:
@@ -70,24 +70,7 @@ public:
 	void drawColorPolygon(int nVerts, Vec2i* verts, Vec3f* colors);
 #pragma endregion
 
-#pragma region 2DClip
-	void lineClipCohSuth(const Vec2i& winMin, const Vec2i& winMax, Vec2i& p1, Vec2i& p2);
-	void lineClipLiangBarsk(const Vec2i& winMin, const Vec2i& winMax, Vec2i& p1, Vec2i& p2);
-	void testLineClip();
-
-	int checkPtInside(Vec2i& p, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax);
-	int checkCross(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax);
-	Vec2i intersect(Vec2i& p1, Vec2i& p2, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax);
-	void clipPoint(Vec2i& p, Boundary edeg, const Vec2i& winMin, const Vec2i& winMax, Vec2i* pOut, int* cnt, Vec2i* first[], Vec2i* last);
-	void closeClip(const Vec2i& winMin, const Vec2i& winMax, Vec2i* pOut, int* cnt, Vec2i* first[], Vec2i* last);
-	int polygonClipSuthHodg(const Vec2i& winMin, const Vec2i& winMax, int n, Vec2i* pIn, Vec2i* pOut);
-	void testPolygonClip();
-#pragma endregion
-
 	void drawViewportArea(const Vec2i& winMin, const Vec2i& winMax);
-	Vec2i NDCToScreenSpace(const Vec4f pos, const int& width, const int& height, const Vec2i& center);
-	void rasterizeTrangle(const Vec4f& v0, const Vec4f& v1, const Vec4f& v2, const Vec3f& col0, const Vec3f& col1, const Vec3f& col2);
-	void matrixDisplay3D();
 
 private:
 	inline void drawPixel(int x, int y, const Vec3f& color)

@@ -4,7 +4,6 @@
 
 #define PIX_BITS 24
 
-
 //边界权重
 struct EdgeEquation
 {
@@ -68,7 +67,7 @@ struct Vertex
 	Vec3f color;
 
 	Vertex() {};
-	Vertex(const Vec3f& _pos, const Vec2f& _uv, const Vec3f& _normal, const Vec3f& _color)
+	Vertex(const Vec3f& _pos, const Vec3f& _normal, const Vec2f& _uv, const Vec3f& _color)
 		:pos(_pos), uv(_uv), normal(_normal), color(_color)
 	{
 	}
@@ -262,6 +261,7 @@ public:
 		}
 	}
 
+	//绘制边框
 	void rasterizeBorder(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels)
 	{
 		float inv_camera_z[3];

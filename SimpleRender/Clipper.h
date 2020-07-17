@@ -293,6 +293,10 @@ inline void setIntersectFragment(const Fragment& vert0, const Fragment& vert1, f
 }
 
 //逐点逐边裁剪
+//此处算法有问题。当p点位于right和top的边界交点时，
+//checkVertexCross时，会判断p点与边界相交，且交点仍然为p点,
+//这样，p点会在checkVertexCross的判定中添加到输出列表
+//紧接着又在接下来的checkVertexInside里，也判定通过，又一次添加到输出列表中。
 inline void clipVertex(const Fragment& vert, Boundary edge, std::vector<Fragment>& outFrags, std::vector<Fragment*>& first, std::vector<Fragment>& last)
 {
 	Fragment frag;
@@ -461,7 +465,8 @@ inline void CVVClip(Triangle** tris, size_t& cnt)
 			continue;
 		}
 
-		clipTriangleBySuthHodgIn3D(currTri, clippedTris);
+		//clipTriangleBySuthHodgIn3D(currTri, clippedTris);
+		clipTriangleByClassicIn3D(currTri, clippedTris);
 	}
 
 	size_t newCnt = clippedTris.size();

@@ -97,8 +97,8 @@ void RenderContext::draw(BYTE* buffer)
 	
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
-		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
-		//m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
+		//m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
+		m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
 
 		size_t fragmentSize = fragments.size();
 		Vec3f* fragmentOut = new Vec3f();

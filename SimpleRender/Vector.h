@@ -155,7 +155,7 @@ struct Vector3
 	Vector3():x(0), y(0), z(0) {};
 	Vector3(const T& _x) :x(_x), y(_x), z(_x) {};
 	Vector3(const T& _x, const T& _y, const T& _z) :x(_x), y(_y), z(_z) {};
-	Vector3(const T* t) : x(t[0]), y(t[1]), t(t[2]) {};
+	//Vector3(const T* t) : x(t[0]), y(t[1]), t(t[2]) {};
 	Vector3(const Vector3& v) :x(v.x), y(v.y), z(v.z) {};
 	const Vector3& operator = (const Vector3& v)
 	{
