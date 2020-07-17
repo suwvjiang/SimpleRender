@@ -49,14 +49,14 @@ void loadObj(const string& path, std::vector<Vertex>& vertices, std::vector<int>
 		else if (line.substr(0, 2) == "f ")//index
 		{
 			int i, j, k;
-			int n, m, p;
+			int n = 0, m = 0, p = 0;
 			int x, y, z;
 			
 			const char* chh = line.c_str();
 			sscanf_s(chh, "f %d//%d %d//%d %d//%d", &i, &x, &j, &y, &k, &z);
-			indexs.emplace_back(i); index_t.emplace_back(n); index_n.emplace_back(x);
-			indexs.emplace_back(j); index_t.emplace_back(m); index_n.emplace_back(y);
-			indexs.emplace_back(k); index_t.emplace_back(p); index_n.emplace_back(z);
+			indexs.emplace_back(i - 1); index_t.emplace_back(n - 1); index_n.emplace_back(x - 1);
+			indexs.emplace_back(j - 1); index_t.emplace_back(m - 1); index_n.emplace_back(y - 1);
+			indexs.emplace_back(k - 1); index_t.emplace_back(p - 1); index_n.emplace_back(z - 1);
 		}
 	}
 
