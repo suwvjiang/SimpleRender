@@ -8,7 +8,6 @@
 
 #include "Vector.h"
 #include "Rasterizer.h"
-#include "Buffer.h"
 
 using namespace std;
 

@@ -158,6 +158,10 @@ inline void BaseInterpolationFunc(const Fragment& frag0, const Fragment& frag1, 
 	destFrag.pos += frag1.pos * t1;
 	destFrag.pos += frag2.pos * t2;
 
+	destFrag.normal += frag0.normal * t0;
+	destFrag.normal += frag1.normal * t1;
+	destFrag.normal += frag2.normal * t2;
+
 	destFrag.uv += frag0.uv * t0;
 	destFrag.uv += frag1.uv * t1;
 	destFrag.uv += frag2.uv * t2;
