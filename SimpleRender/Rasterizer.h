@@ -55,7 +55,7 @@ struct EdgeEquationSet
 
 	bool evaluate()
 	{
-		return e0.value >= 0 && e1.value >= 0 && e2.value >= 0;
+		return e0.value <= 0 && e1.value <= 0 && e2.value <= 0;
 	}
 };
 //¶¥µãÊý¾Ý
@@ -117,6 +117,7 @@ struct ShaderStruct
 	{
 		Matrix4x4f world;
 		Matrix4x4f view_proj;
+		Vec3f lightDir;
 	};
 
 	static ConstBuffer constBuffer;
@@ -126,13 +127,14 @@ struct ShaderStruct
 		Vec4f pos(input.pos.x, input.pos.y, input.pos.z, 1);
 		Vec4f worldPos = Transform(constBuffer.world, pos);
 		output.pos = Transform(constBuffer.view_proj, worldPos);
+		output.normal = input.normal;
 		output.color = input.color;
 		output.uv = input.uv;
 	}
 
 	inline static void FS(const Fragment& input, Vec3f* output)
 	{
-		(*output) = input.color;
+		(*output) = input.normal;
 	}
 
 	inline static void TextFS(const Fragment& input, Vec3f* output)
@@ -142,6 +144,12 @@ struct ShaderStruct
 		u /= 32;
 		v /= 32;
 		(*output) = ((u + v) & 1) ? Color_White : Color_Blue;
+	}
+
+	inline static void DepthFS(const Fragment& input, Vec3f* output)
+	{
+		float depth = 0.5f * input.pos.z + 0.5f;
+		(*output) = Vec3f(depth);
 	}
 };
 
@@ -213,7 +221,7 @@ public:
 			return;
 
 		EdgeEquation area(p0, p1, p2);
-		if (area.value < 0)
+		if (area.value > 0)
 			return;
 
 		p.x = minX;
@@ -245,7 +253,7 @@ public:
 					depth = triangle.vertex[0].pos.z * param0;
 					depth += triangle.vertex[1].pos.z * param1;
 					depth += triangle.vertex[2].pos.z * param2;
-					if (depth > depthBuffer[index])
+					if (depth < depthBuffer[index])
 					{
 						depthBuffer[index] = depth;
 

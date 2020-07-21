@@ -23,7 +23,7 @@ void RenderContext::setViewport(int width, int height, const Viewport& view)
 	{
 		for (int j = view.height-1; j >= 0; --j)
 		{
-			m_depthBuffer.emplace_back(-1.0);
+			m_depthBuffer.emplace_back(1.0);
 		}
 	}
 }
@@ -55,7 +55,7 @@ void RenderContext::clearDepthBuffer()
 {
 	size_t cnt = m_depthBuffer.size();
 	for (size_t i = 0; i < cnt; ++i)
-		m_depthBuffer[i] = -1.0;
+		m_depthBuffer[i] = 1.0;
 }
 
 void RenderContext::draw(BYTE* buffer)
@@ -97,8 +97,8 @@ void RenderContext::draw(BYTE* buffer)
 	
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
-		//m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
-		m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
+		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
+		//m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
 
 		size_t fragmentSize = fragments.size();
 		Vec3f* fragmentOut = new Vec3f();

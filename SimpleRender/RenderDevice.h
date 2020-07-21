@@ -11,9 +11,7 @@ class RenderDevice
 private:
 	bool m_inited = false;
 
-	Vec2i screenCenter;
 	int winWidth, winHeight;
-	float depthBuffer[160000];
 
 	BYTE* m_fragmentBuff = NULL;
 

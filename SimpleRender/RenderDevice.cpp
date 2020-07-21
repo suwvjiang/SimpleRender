@@ -28,21 +28,16 @@ void RenderDevice::initDevice(int width, int height)
 
 	winWidth = width;
 	winHeight = height; 
-	screenCenter.x = winWidth >> 1;
-	screenCenter.y = winHeight >> 1;
 
-	int cnt = winWidth * winHeight;
-	for (int i = 0; i < cnt; ++i)
-		depthBuffer[i] = 1.0f;
-
-	m_viewPort.width = width-100;
-	m_viewPort.height = height-100;
+	m_viewPort.width = width-50;
+	m_viewPort.height = height-50;
 	m_viewPort.originX = width >> 1;
 	m_viewPort.originY = height >> 1;
 
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(width, height, m_viewPort);
 
+	m_radius = 4;
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
 	float fov = PI * 0.5, aspect = 1.0;
@@ -53,7 +48,8 @@ void RenderDevice::initDevice(int width, int height)
 	m_origin.y = (height >> 1);
 	m_origin.z = 0;
 	m_camera->setFocusPos(m_origin);
-	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin);
+
+	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin-Vec3f(0, 1, 0));
 
 	initMeshInfo();
 }
@@ -72,7 +68,7 @@ const static float Rotate_Speed = 360.0;
 //更新相机信息
 void RenderDevice::update()
 {
-	m_angle += PI / Rotate_Speed;
+	//m_angle += PI / Rotate_Speed;
 	Vec3f pos(m_radius * sin(m_angle), 0, m_radius * cos(m_angle));
 	pos += m_origin;
 	m_camera->setPos(pos);
@@ -92,17 +88,17 @@ void RenderDevice::drawcall()
 	m_context3D->setVertexBuffer(m_vertexBuffer);
 
 	m_context3D->setVertexShader(ShaderStruct::VS);
-	m_context3D->setFragmentShader(ShaderStruct::TextFS);
+	m_context3D->setFragmentShader(ShaderStruct::DepthFS);
 
 	m_context3D->draw(m_fragmentBuff);
 }
 
 void RenderDevice::initMeshInfo()
 {
-	float w2 = 75;
-	float h2 = 75;
-	float d2 = 75;
-	/*
+	float w2 = 1;
+	float h2 = 1;
+	float d2 = 1;
+	
 	//Vertex
 	Vertex v[24];
 	v[0] = Vertex(-w2, -h2, -d2, 1, 0, 0, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
@@ -136,26 +132,26 @@ void RenderDevice::initMeshInfo()
 	v[23] = Vertex(+w2, -h2, +d2, 0, 1, 0, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 	
 	//Index
-	//顺时针
+	//逆时针
 	size_t i[36];
-	i[0] = 0; i[1] = 2; i[2] = 1;
-	i[3] = 0; i[4] = 3; i[5] = 2;
+	i[0] = 0; i[1] = 1; i[2] = 2;
+	i[3] = 0; i[4] = 2; i[5] = 3;
 
-	i[6] = 4; i[7] = 6; i[8] = 5;
-	i[9] = 4; i[10] = 7; i[11] = 6;
+	i[6] = 4; i[7] = 5; i[8] = 6;
+	i[9] = 4; i[10] = 6; i[11] = 7;
 
-	i[12] = 8; i[13] = 10; i[14] = 9;
-	i[15] = 8; i[16] = 11; i[17] = 10;
+	i[12] = 8; i[13] = 9; i[14] = 10;
+	i[15] = 8; i[16] = 10; i[17] = 11;
 
-	i[18] = 12; i[19] = 14; i[20] = 13;
-	i[21] = 12; i[22] = 15; i[23] = 14;
+	i[18] = 12; i[19] = 13; i[20] = 14;
+	i[21] = 12; i[22] = 14; i[23] = 15;
 
-	i[24] = 16; i[25] = 18; i[26] = 17;
-	i[27] = 16; i[28] = 19; i[29] = 18;
+	i[24] = 16; i[25] = 17; i[26] = 18;
+	i[27] = 16; i[28] = 18; i[29] = 19;
 
-	i[30] = 20; i[31] = 22; i[32] = 21;
-	i[33] = 20; i[34] = 23; i[35] = 22;
-	*/
+	i[30] = 20; i[31] = 21; i[32] = 22;
+	i[33] = 20; i[34] = 22; i[35] = 23;
+	
 	std::vector<Vertex> vertices;
 	std::vector<int> indexs;
 
@@ -163,20 +159,20 @@ void RenderDevice::initMeshInfo()
 	loadObj(objPath, vertices, indexs);
 
 	BufferDesc vertexDesc;
-	//vertexDesc.stride = sizeof(Vertex);
-	//vertexDesc.numOfEle = 24;
-	//vertexDesc.data = v;
-	//vertexDesc.bufferSize = sizeof(Vertex) * 24;
+	/*vertexDesc.stride = sizeof(Vertex);
+	vertexDesc.numOfEle = 24;
+	vertexDesc.data = v;
+	vertexDesc.bufferSize = sizeof(Vertex) * 24; */
 	vertexDesc.stride = sizeof(Vertex);
 	vertexDesc.numOfEle = vertices.size();
 	vertexDesc.data = vertices.data();
 	vertexDesc.bufferSize = sizeof(Vertex) * vertices.size();
 
 	BufferDesc indexDesc;
-	//indexDesc.stride = sizeof(size_t);
-	//indexDesc.numOfEle = 36;
-	//indexDesc.data = i;
-	//indexDesc.bufferSize = sizeof(size_t) * 36;
+	/*indexDesc.stride = sizeof(size_t);
+	indexDesc.numOfEle = 36;
+	indexDesc.data = i;
+	indexDesc.bufferSize = sizeof(size_t) * 36;*/
 	indexDesc.stride = sizeof(size_t);
 	indexDesc.numOfEle = indexs.size();
 	indexDesc.data = indexs.data();
