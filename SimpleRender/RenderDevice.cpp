@@ -37,10 +37,10 @@ void RenderDevice::initDevice(int width, int height)
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(width, height, m_viewPort);
 
-	m_radius = 4;
+	m_radius = 6;
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
-	float fov = PI * 0.5, aspect = 1.0;
+	float fov = PI/2, aspect = 1.0;
 	float zNear = -1, zFar = -1000;
 	m_camera->setViewInfo(fov, aspect, zNear, zFar);
 
@@ -68,7 +68,7 @@ const static float Rotate_Speed = 360.0;
 //更新相机信息
 void RenderDevice::update()
 {
-	//m_angle += PI / Rotate_Speed;
+	m_angle += PI / Rotate_Speed;
 	Vec3f pos(m_radius * sin(m_angle), 0, m_radius * cos(m_angle));
 	pos += m_origin;
 	m_camera->setPos(pos);
@@ -88,7 +88,7 @@ void RenderDevice::drawcall()
 	m_context3D->setVertexBuffer(m_vertexBuffer);
 
 	m_context3D->setVertexShader(ShaderStruct::VS);
-	m_context3D->setFragmentShader(ShaderStruct::DepthFS);
+	m_context3D->setFragmentShader(ShaderStruct::FS);
 
 	m_context3D->draw(m_fragmentBuff);
 }

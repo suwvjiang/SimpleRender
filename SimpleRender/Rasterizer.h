@@ -127,7 +127,10 @@ struct ShaderStruct
 		Vec4f pos(input.pos.x, input.pos.y, input.pos.z, 1);
 		Vec4f worldPos = Transform(constBuffer.world, pos);
 		output.pos = Transform(constBuffer.view_proj, worldPos);
-		output.normal = input.normal;
+
+		Matrix3x3f _objToWorld = Matrix3x3f(constBuffer.world);
+		output.normal = Transform(_objToWorld, input.normal);
+
 		output.color = input.color;
 		output.uv = input.uv;
 	}
@@ -148,7 +151,7 @@ struct ShaderStruct
 
 	inline static void DepthFS(const Fragment& input, Vec3f* output)
 	{
-		float depth = 0.5f * input.pos.z + 0.5f;
+		float depth = -0.5f * input.pos.z + 0.5f;//0-1
 		(*output) = Vec3f(depth);
 	}
 };

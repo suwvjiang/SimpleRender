@@ -2,6 +2,9 @@
 #include "stdfx.h"
 #include "Vector.h"
 
+template<typename U>
+class Matrix4x4;
+
 /*-----------*/
 /* Matrix3x3 */
 /*-----------*/
@@ -15,9 +18,24 @@ class Matrix3x3
 	friend std::ostream& operator<<(std::ostream& lhs, const Matrix3x3<U>& rhs);
 
 public:
-	Matrix3x3() {}
-	~Matrix3x3() {}
+	Matrix3x3() {};
+	~Matrix3x3() {};
 	Matrix3x3(const Matrix3x3& m)
+	{
+		matrix[0][0] = m.matrix[0][0];
+		matrix[0][1] = m.matrix[0][1];
+		matrix[0][2] = m.matrix[0][2];
+
+		matrix[1][0] = m.matrix[1][0];
+		matrix[1][1] = m.matrix[1][1];
+		matrix[1][2] = m.matrix[1][2];
+
+		matrix[2][0] = m.matrix[2][0];
+		matrix[2][1] = m.matrix[2][1];
+		matrix[2][2] = m.matrix[2][2];
+	}
+
+	Matrix3x3(const Matrix4x4<T>& m)
 	{
 		matrix[0][0] = m.matrix[0][0];
 		matrix[0][1] = m.matrix[0][1];
