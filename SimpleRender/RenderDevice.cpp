@@ -95,10 +95,11 @@ void RenderDevice::drawcall()
 
 void RenderDevice::initMeshInfo()
 {
+#pragma region Panel
 	float w2 = 1;
 	float h2 = 1;
 	float d2 = 1;
-	
+
 	//Vertex
 	Vertex v[24];
 	v[0] = Vertex(-w2, -h2, -d2, 1, 0, 0, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
@@ -151,7 +152,8 @@ void RenderDevice::initMeshInfo()
 
 	i[30] = 20; i[31] = 21; i[32] = 22;
 	i[33] = 20; i[34] = 22; i[35] = 23;
-	
+#pragma endregion
+
 	std::vector<Vertex> vertices;
 	std::vector<int> indexs;
 
