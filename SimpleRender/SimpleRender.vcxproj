@@ -151,6 +151,7 @@
     <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="RenderDevice.cpp" />
     <ClCompile Include="SimpleRender.cpp" />
+    <ClCompile Include="TGAImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h" />
@@ -163,6 +164,7 @@
     <ClInclude Include="RenderContext.h" />
     <ClInclude Include="RenderDevice.h" />
     <ClInclude Include="stdfx.h" />
+    <ClInclude Include="TGAImage.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
