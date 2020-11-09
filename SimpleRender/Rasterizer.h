@@ -154,6 +154,19 @@ struct ShaderStruct
 		float depth = -0.5f * input.pos.z + 0.5f;//0-1
 		(*output) = Vec3f(depth);
 	}
+
+	inline static void LightFS(const Fragment& input, Vec3f* output)
+	{
+		Vec3f n = Normalize(input.normal);
+		Vec3f l = Normalize(constBuffer.lightDir);
+
+		float nl = Dot(n, l);
+		nl = max(0, nl);
+
+		(*output) = Vec3f(nl);
+
+	}
+
 };
 
 using VertexShader = std::function<void(const Vertex& pVertexIn, Fragment& pVertexOut)>;

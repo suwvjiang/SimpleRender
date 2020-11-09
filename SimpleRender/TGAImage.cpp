@@ -238,7 +238,7 @@ bool TGAImage::unload_rle_data(std::ofstream& out)const
 			std::cerr << "can't dump the tga file\n";
 			return false;
 		}
-		out.write(reinterpret_cast<const char*>(data.data() + chunkstart), raw ? run_length * bytespp : bytespp));
+		out.write(reinterpret_cast<const char*>(data.data() + chunkstart), raw ? run_length * bytespp : bytespp);
 		if (!out.good())
 		{
 			std::cerr << "can't dump the tga file\n";

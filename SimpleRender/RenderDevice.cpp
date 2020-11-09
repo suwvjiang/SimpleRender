@@ -50,6 +50,7 @@ void RenderDevice::initDevice(int width, int height)
 	m_camera->setFocusPos(m_origin);
 
 	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin-Vec3f(0, 1, 0));
+	ShaderStruct::constBuffer.lightDir = Vec3f(1, 1, 1);
 
 	initMeshInfo();
 }
@@ -88,7 +89,7 @@ void RenderDevice::drawcall()
 	m_context3D->setVertexBuffer(m_vertexBuffer);
 
 	m_context3D->setVertexShader(ShaderStruct::VS);
-	m_context3D->setFragmentShader(ShaderStruct::FS);
+	m_context3D->setFragmentShader(ShaderStruct::LightFS);
 
 	m_context3D->draw(m_fragmentBuff);
 }
