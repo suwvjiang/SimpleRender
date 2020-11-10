@@ -117,6 +117,8 @@ struct ShaderStruct
 	{
 		Matrix4x4f world;
 		Matrix4x4f view_proj;
+		Matrix4x4f m_v_p;
+		Matrix4x4f obj2world;
 		Vec3f lightDir;
 	};
 
@@ -125,10 +127,9 @@ struct ShaderStruct
 	inline static void VS(const Vertex& input, Fragment& output)
 	{
 		Vec4f pos(input.pos.x, input.pos.y, input.pos.z, 1);
-		Vec4f worldPos = Transform(constBuffer.world, pos);
-		output.pos = Transform(constBuffer.view_proj, worldPos);
+		output.pos = Transform(constBuffer.m_v_p, pos);
 
-		Matrix3x3f _objToWorld = Matrix3x3f(constBuffer.world);
+		Matrix3x3f _objToWorld = Matrix3x3f(constBuffer.obj2world);
 		output.normal = Transform(_objToWorld, input.normal);
 
 		output.color = input.color;
@@ -161,7 +162,7 @@ struct ShaderStruct
 		Vec3f l = Normalize(constBuffer.lightDir);
 
 		float nl = Dot(n, l);
-		nl = max(0, nl);
+		nl = 0.5f * nl + 0.5f;
 
 		(*output) = Vec3f(nl);
 

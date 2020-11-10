@@ -47,6 +47,7 @@ void RenderDevice::initDevice(int width, int height)
 	m_origin.x = width >> 1;
 	m_origin.y = (height >> 1);
 	m_origin.z = 0;
+	m_camera->setPos(m_origin + Vec3f(0, 0, m_radius));
 	m_camera->setFocusPos(m_origin);
 
 	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin-Vec3f(0, 1, 0));
@@ -70,12 +71,12 @@ const static float Rotate_Speed = 360.0;
 void RenderDevice::update()
 {
 	m_angle += PI / Rotate_Speed;
-	Vec3f pos(m_radius * sin(m_angle), 0, m_radius * cos(m_angle));
-	pos += m_origin;
-	m_camera->setPos(pos);
 	m_camera->update();
-
 	ShaderStruct::constBuffer.view_proj = m_camera->viewProjMatrix();
+
+	Matrix4x4f mtrans = Matrix4x4RotationY<float>(m_angle);
+	ShaderStruct::constBuffer.obj2world = ShaderStruct::constBuffer.world * mtrans;
+	ShaderStruct::constBuffer.m_v_p = m_camera->viewProjMatrix() * ShaderStruct::constBuffer.obj2world;
 }
 //»æÖÆ
 void RenderDevice::drawcall()
