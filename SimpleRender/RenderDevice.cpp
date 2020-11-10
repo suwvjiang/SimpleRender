@@ -37,7 +37,7 @@ void RenderDevice::initDevice(int width, int height)
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(width, height, m_viewPort);
 
-	m_radius = 6;
+	m_radius = 4;
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
 	float fov = PI/2, aspect = 1.0;
@@ -47,7 +47,7 @@ void RenderDevice::initDevice(int width, int height)
 	m_origin.x = width >> 1;
 	m_origin.y = (height >> 1);
 	m_origin.z = 0;
-	m_camera->setPos(m_origin + Vec3f(0, 0, m_radius));
+	m_camera->setPos(m_origin + Vec3f(0, m_radius, m_radius));
 	m_camera->setFocusPos(m_origin);
 
 	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin-Vec3f(0, 1, 0));
@@ -71,6 +71,8 @@ const static float Rotate_Speed = 360.0;
 void RenderDevice::update()
 {
 	m_angle += PI / Rotate_Speed;
+	/*Vec3f pos = Vec3f(m_radius * sin(m_angle) + m_origin.x, m_origin.y, m_radius * cos(m_angle) + m_origin.z);
+	m_camera->setPos(pos);*/
 	m_camera->update();
 	ShaderStruct::constBuffer.view_proj = m_camera->viewProjMatrix();
 
