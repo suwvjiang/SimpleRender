@@ -23,6 +23,7 @@ private:
 	Viewport m_viewPort;
 	float m_angle = 0;
 	float m_radius = 3;
+	float m_scale = 1;
 	Vec3f m_origin;
 
 public:

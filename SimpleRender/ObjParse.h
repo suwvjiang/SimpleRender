@@ -52,7 +52,7 @@ void loadObj(const string& path, std::vector<Vertex>& vertices, std::vector<int>
 			int x, y, z;
 			
 			const char* chh = line.c_str();
-			sscanf_s(chh, "f %d//%d %d//%d %d//%d", &i, &x, &j, &y, &k, &z);
+			sscanf_s(chh, "f %d/%d/%d %d/%d/%d %d/%d/%d", &i, &n, &x, &j, &m, &y, &k, &p, &z);
 			indexs.emplace_back(i - 1); index_t.emplace_back(n - 1); index_n.emplace_back(x - 1);
 			indexs.emplace_back(j - 1); index_t.emplace_back(m - 1); index_n.emplace_back(y - 1);
 			indexs.emplace_back(k - 1); index_t.emplace_back(p - 1); index_n.emplace_back(z - 1);
@@ -62,6 +62,6 @@ void loadObj(const string& path, std::vector<Vertex>& vertices, std::vector<int>
 	int cnt = pointes.size();
 	for (int i = 0; i < cnt; ++i)
 	{
-		vertices.emplace_back(Vertex(pointes[i], normals[i], Vec2f(0), Vec3f(0)));
+		vertices.emplace_back(Vertex(pointes[i], normals[i], uvs[i], Vec3f(0)));
 	}
 }

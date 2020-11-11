@@ -5,11 +5,11 @@
 #include "stdfx.h"
 #include "RenderDevice.h"
 
-#define SCREEN_WIDTH 400
-#define SCREEN_HEIGHT 400
+//#define SCREEN_WIDTH 400
+//#define SCREEN_HEIGHT 400
 
-static const int windowWidth = 400;
-static const int windowHeight = 400;
+static const int windowWidth = 600;
+static const int windowHeight = 600;
 const char* windowTitle = "Simple Render";
 
 bool inited = false;

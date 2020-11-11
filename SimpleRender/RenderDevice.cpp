@@ -37,20 +37,21 @@ void RenderDevice::initDevice(int width, int height)
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(width, height, m_viewPort);
 
-	m_radius = 4;
+	m_radius = 15;
+	m_scale = 3;
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
-	float fov = PI/2, aspect = 1.0;
-	float zNear = -1, zFar = -1000;
+	float fov = PI*0.3f, aspect = 1.0;
+	float zNear = -10, zFar = -1000;
 	m_camera->setViewInfo(fov, aspect, zNear, zFar);
 
 	m_origin.x = width >> 1;
 	m_origin.y = (height >> 1);
 	m_origin.z = 0;
-	m_camera->setPos(m_origin + Vec3f(0, m_radius, m_radius));
+	m_camera->setPos(m_origin + Vec3f(0, 0, m_radius));
 	m_camera->setFocusPos(m_origin);
 
-	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin-Vec3f(0, 1, 0));
+	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin);
 	ShaderStruct::constBuffer.lightDir = Vec3f(1, 1, 1);
 
 	initMeshInfo();
@@ -76,7 +77,7 @@ void RenderDevice::update()
 	m_camera->update();
 	ShaderStruct::constBuffer.view_proj = m_camera->viewProjMatrix();
 
-	Matrix4x4f mtrans = Matrix4x4RotationY<float>(m_angle);
+	Matrix4x4f mtrans = Matrix4x4RotationY<float>(m_angle)*Matrix4x4Scaling<float>(m_scale, m_scale, m_scale);
 	ShaderStruct::constBuffer.obj2world = ShaderStruct::constBuffer.world * mtrans;
 	ShaderStruct::constBuffer.m_v_p = m_camera->viewProjMatrix() * ShaderStruct::constBuffer.obj2world;
 }
@@ -161,7 +162,7 @@ void RenderDevice::initMeshInfo()
 	std::vector<Vertex> vertices;
 	std::vector<int> indexs;
 
-	string objPath("D:\\Projects\\SimpleRender\\model\\teapot.obj");
+	string objPath("D:\\Projects\\SimpleRender\\model\\african_head\\african_head.obj");
 	loadObj(objPath, vertices, indexs);
 
 	BufferDesc vertexDesc;
@@ -197,7 +198,7 @@ std::shared_ptr<Buffer> RenderDevice::createBuffer(const BufferDesc& desc)
 #pragma region Raster Function
 void RenderDevice::drawPixel(int x, int y)
 {
-	//SetPixel(mScreenHDC, x, y, RGB(255, 255, 255));
+	drawPixel(x, y, RGB(128, 128, 128));
 }
 
 void RenderDevice::drawLineDDA(int x0, int y0, int xEnd, int yEnd)
