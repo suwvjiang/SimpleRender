@@ -10,6 +10,7 @@ class RenderDevice
 {
 private:
 	bool m_inited = false;
+	bool m_rotateCamera = false;
 
 	int winWidth, winHeight;
 
@@ -22,6 +23,7 @@ private:
 
 	Viewport m_viewPort;
 	float m_angle = 0;
+	float m_cameraAngle = 0;
 	float m_radius = 3;
 	float m_scale = 1;
 	Vec3f m_origin;
@@ -43,6 +45,12 @@ public:
 	void drawcall();
 
 	void initMeshInfo();
+
+	void switchCameraRotate() { m_rotateCamera = !m_rotateCamera; }
+	void sliderCamera(float delta) { m_radius += delta; }
+	void scaleModel(float scale) { m_scale += scale; }
+
+	bool getCameraRotate() { return m_rotateCamera; }
 
 	std::shared_ptr<Buffer> createBuffer(const BufferDesc& desc);
 

@@ -77,6 +77,21 @@ void getInputStatus()
 		
 		switch (key)
 		{
+		case 32://space
+			device->switchCameraRotate();
+			break;
+		case 119://w
+			device->sliderCamera(-0.5f);
+			break;
+		case 115://s
+			device->sliderCamera(0.5f);
+			break;
+		case 97://a
+			device->scaleModel(0.1f);
+			break;
+		case 100://d
+			device->scaleModel(-0.1f);
+			break;
 		default:
 			break;
 		}
@@ -111,8 +126,8 @@ void showFPS()
 	}
 
 	char strBuffer[40];
-	sprintf_s(strBuffer, 40, "fps:%0.3f", fps);
-	TextOut(mScreenHDC, 0, 0, strBuffer, 9);
+	sprintf_s(strBuffer, 40, "fps:%0.1f rotatemodel:%s", fps, device->getCameraRotate()?"camera":"model ");
+	TextOut(mScreenHDC, 0, 0, strBuffer, 27);
 }
 
 void update()
@@ -157,6 +172,10 @@ int main()
 	update();
 	return 0;
 }
+
+//²Î¿¼ÎÄÏ×£º
+//https://github.com/zpzsoft/SoftRaster/blob/master/main.cpp
+//https://github.com/puppetmasterzj/AlpacaRenderer/blob/master/ApcMain.cpp
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu

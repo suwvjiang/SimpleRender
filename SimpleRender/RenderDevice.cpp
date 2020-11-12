@@ -38,14 +38,13 @@ void RenderDevice::initDevice(int width, int height)
 	m_context3D->setViewport(width, height, m_viewPort);
 
 	m_radius = 15;
-	m_scale = 3;
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
 	float fov = PI*0.3f, aspect = 1.0;
 	float zNear = -10, zFar = -1000;
 	m_camera->setViewInfo(fov, aspect, zNear, zFar);
 
-	m_origin.x = width >> 1;
+	m_origin.x = (width >> 1);
 	m_origin.y = (height >> 1);
 	m_origin.z = 0;
 	m_camera->setPos(m_origin + Vec3f(0, 0, m_radius));
@@ -71,13 +70,17 @@ const static float Rotate_Speed = 360.0;
 //更新相机信息
 void RenderDevice::update()
 {
-	m_angle += PI / Rotate_Speed;
-	/*Vec3f pos = Vec3f(m_radius * sin(m_angle) + m_origin.x, m_origin.y, m_radius * cos(m_angle) + m_origin.z);
-	m_camera->setPos(pos);*/
+	if (m_rotateCamera)
+		m_cameraAngle += PI / Rotate_Speed;
+	else
+		m_angle += PI / Rotate_Speed;
+	
+	Vec3f pos = Vec3f(m_radius * sin(m_cameraAngle) + m_origin.x, m_origin.y, m_radius * cos(m_cameraAngle) + m_origin.z);
+	m_camera->setPos(pos);
 	m_camera->update();
 	ShaderStruct::constBuffer.view_proj = m_camera->viewProjMatrix();
 
-	Matrix4x4f mtrans = Matrix4x4RotationY<float>(m_angle)*Matrix4x4Scaling<float>(m_scale, m_scale, m_scale);
+	Matrix4x4f mtrans = Matrix4x4RotationY<float>(m_angle) * Matrix4x4Scaling<float>(m_scale, m_scale, m_scale);
 	ShaderStruct::constBuffer.obj2world = ShaderStruct::constBuffer.world * mtrans;
 	ShaderStruct::constBuffer.m_v_p = m_camera->viewProjMatrix() * ShaderStruct::constBuffer.obj2world;
 }
