@@ -37,11 +37,11 @@ void RenderDevice::initDevice(int width, int height)
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(width, height, m_viewPort);
 
-	m_radius = 15;
+	m_radius = 5;
 	m_camera = std::make_shared<Camera>();
 	//identity Project Matrix
 	float fov = PI*0.3f, aspect = 1.0;
-	float zNear = -10, zFar = -1000;
+	float zNear = -1, zFar = -1000;
 	m_camera->setViewInfo(fov, aspect, zNear, zFar);
 
 	m_origin.x = (width >> 1);

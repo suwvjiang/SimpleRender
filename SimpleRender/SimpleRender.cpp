@@ -1,6 +1,7 @@
 // SimpleRender.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //右手定则坐标系
 //相机与世界同一坐标系
+#pragma comment( linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"" )
 
 #include "stdfx.h"
 #include "RenderDevice.h"
@@ -77,21 +78,6 @@ void getInputStatus()
 		
 		switch (key)
 		{
-		case 32://space
-			device->switchCameraRotate();
-			break;
-		case 119://w
-			device->sliderCamera(-0.5f);
-			break;
-		case 115://s
-			device->sliderCamera(0.5f);
-			break;
-		case 97://a
-			device->scaleModel(0.1f);
-			break;
-		case 100://d
-			device->scaleModel(-0.1f);
-			break;
 		default:
 			break;
 		}
@@ -156,6 +142,27 @@ LRESULT OnEvent(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		exit(0);
 		return 0;
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case VK_UP:
+			device->sliderCamera(-0.5f);
+			break;
+		case VK_DOWN:
+			device->sliderCamera(0.5f);
+			break;
+		case VK_LEFT:
+			device->scaleModel(0.1f);
+			break;
+		case VK_RIGHT:
+			device->scaleModel(-0.1f);
+			break;
+		case VK_SPACE:
+			device->switchCameraRotate();
+			break;
+		default:
+			break;
+		}
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }

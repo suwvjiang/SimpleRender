@@ -39,7 +39,7 @@ void Camera::setViewInfo(const float& fov, const float& aspect, const float& zNe
 	m_zNear = zNear;
 	m_zFar = zFar;
 
-	float cot = 1/tan(fov * 0.5f);
+	float cot = tan((PI - fov) * 0.5f);
 
 	m_proj = IdentityMatrix4x4<float>();
 	m_proj[0][0] = cot / aspect;
