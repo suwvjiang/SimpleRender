@@ -16,16 +16,6 @@ struct EdgeEquation
 		k = Cross(p1, p0);
 		value = p.x * i + p.y * j - k;
 	}
-
-	void incrementX()
-	{
-		value += i;
-	}
-
-	void incrementY()
-	{
-		value += j;
-	}
 };
 //重心坐标系
 struct EdgeEquationSet
@@ -41,16 +31,16 @@ struct EdgeEquationSet
 
 	void incrementX()
 	{
-		e0.incrementX();
-		e1.incrementX();
-		e2.incrementX();
+		e0.value += e0.i;
+		e1.value += e1.i;
+		e2.value += e2.i;
 	}
 
 	void incrementY()
 	{
-		e0.incrementY();
-		e1.incrementY();
-		e2.incrementY();
+		e0.value += e0.j;
+		e1.value += e1.j;
+		e2.value += e2.j;
 	}
 
 	bool evaluate()
@@ -164,8 +154,9 @@ struct ShaderStruct
 		float nl = Dot(n, l);
 		nl = 0.5f * nl + 0.5f;
 
-		(*output) = Vec3f(nl);
-
+		(*output).x = nl;
+		(*output).y = nl;
+		(*output).z = nl;
 	}
 
 };
@@ -212,7 +203,7 @@ public:
 		m_viewPort = viewPort;
 	}
 
-	void rasterize(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, std::vector<float>& depthBuffer)
+	void rasterize(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
 	{
 		float inv_camera_z[3];
 		inv_camera_z[0] = 1 / triangle.vertex[0].pos.w;
@@ -255,7 +246,7 @@ public:
 			tempX = tempY;
 			for (i = minX; i < maxX; ++i)
 			{
-				if (tempX.evaluate())
+				if (tempX.e0.value <= 0 && tempX.e1.value <= 0 && tempX.e2.value <= 0)
 				{
 					param0 = float(tempX.e0.value) * inv_camera_z[0] / area.value;
 					param1 = float(tempX.e1.value) * inv_camera_z[1] / area.value;
@@ -270,6 +261,7 @@ public:
 					depth = triangle.vertex[0].pos.z * param0;
 					depth += triangle.vertex[1].pos.z * param1;
 					depth += triangle.vertex[2].pos.z * param2;
+
 					if (depth < depthBuffer[index])
 					{
 						depthBuffer[index] = depth;
@@ -283,10 +275,15 @@ public:
 				}
 
 				index++;
-				tempX.incrementX();
+
+				tempX.e0.value += tempX.e0.i;
+				tempX.e1.value += tempX.e1.i;
+				tempX.e2.value += tempX.e2.i;
 			}
 			index += m_viewPort.width - maxX + minX;
-			tempY.incrementY();
+			tempY.e0.value += tempY.e0.j;
+			tempY.e1.value += tempY.e1.j;
+			tempY.e2.value += tempY.e2.j;
 		}
 	}
 

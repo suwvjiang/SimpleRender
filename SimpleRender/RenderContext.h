@@ -32,7 +32,12 @@ private:
 	std::shared_ptr<Rasterizer> m_rasterizer;
 	std::shared_ptr<Buffer> m_vertexBuffer;
 	std::shared_ptr<Buffer> m_indexBuffer;
-	std::vector<float> m_depthBuffer;
+	float* m_depthBuffer;
+	size_t m_dBufferSize;
+
+	Fragment* m_tempVertex;
+	Vertex* m_vertexData;
+	Triangle* m_triangles;
 
 	inline void outputToRenderTarget(const Vec2i& pixel, const Vec3f& color, BYTE* buffer)
 	{

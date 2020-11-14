@@ -14,6 +14,8 @@ RenderDevice::~RenderDevice()
 	m_vertexBuffer = nullptr;
 	m_indexBuffer = nullptr;
 	m_camera = nullptr;
+
+	delete[] m_fragmentBuff;
 }
 
 bool RenderDevice::isInited()
@@ -92,9 +94,6 @@ void RenderDevice::drawcall()
 	drawViewportArea(viewportMin, viewportMax);
 	
 	m_context3D->clearDepthBuffer();
-	m_context3D->setIndexBuffer(m_indexBuffer);
-	m_context3D->setVertexBuffer(m_vertexBuffer);
-
 	m_context3D->setVertexShader(ShaderStruct::VS);
 	m_context3D->setFragmentShader(ShaderStruct::LightFS);
 
@@ -190,6 +189,9 @@ void RenderDevice::initMeshInfo()
 
 	m_vertexBuffer = createBuffer(vertexDesc);
 	m_indexBuffer = createBuffer(indexDesc);
+
+	m_context3D->setVertexBuffer(m_vertexBuffer);
+	m_context3D->setIndexBuffer(m_indexBuffer);
 }
 
 std::shared_ptr<Buffer> RenderDevice::createBuffer(const BufferDesc& desc)

@@ -7,6 +7,9 @@ RenderContext::RenderContext()
 
 RenderContext::~RenderContext()
 {
+	delete[] m_tempVertex;
+	delete[] m_triangles;
+	delete[] m_depthBuffer;
 	m_rasterizer = nullptr;
 }
 
@@ -18,14 +21,10 @@ void RenderContext::setViewport(int width, int height, const Viewport& view)
 	m_viewport = view;
 	m_rasterizer->setViewport(view);
 
-	m_depthBuffer.clear();
-	for (int i = view.width-1; i >= 0; --i)
-	{
-		for (int j = view.height-1; j >= 0; --j)
-		{
-			m_depthBuffer.emplace_back(1.0);
-		}
-	}
+	m_dBufferSize = width * height;
+	m_depthBuffer = new float[m_dBufferSize];
+	for (int i = m_dBufferSize - 1; i >= 0; --i)
+		m_depthBuffer[i] = 1.0f;
 }
 Viewport RenderContext::getViewport() const
 {
@@ -35,11 +34,17 @@ Viewport RenderContext::getViewport() const
 void RenderContext::setVertexBuffer(std::shared_ptr<Buffer> vBuffer)
 {
 	m_vertexBuffer = vBuffer;
+	size_t vertexNum = m_vertexBuffer->getNumOfEle();
+	m_vertexData = static_cast<Vertex*>(m_vertexBuffer->getData());
+	m_tempVertex = new Fragment[vertexNum];
 }
 
 void RenderContext::setIndexBuffer(std::shared_ptr<Buffer> iBuffer)
 {
 	m_indexBuffer = iBuffer;
+
+	size_t triangleNum = m_indexBuffer->getNumOfEle() / 3;
+	m_triangles = new Triangle[triangleNum];
 }
 
 void RenderContext::setVertexShader(VertexShader vs)
@@ -53,9 +58,8 @@ void RenderContext::setFragmentShader(FragmentShader fs)
 
 void RenderContext::clearDepthBuffer()
 {
-	size_t cnt = m_depthBuffer.size();
-	for (size_t i = 0; i < cnt; ++i)
-		m_depthBuffer[i] = 1.0;
+	for (int i = m_dBufferSize - 1; i >= 0; --i)
+		m_depthBuffer[i] = 1.0f;
 }
 
 void RenderContext::draw(BYTE* buffer)
@@ -66,43 +70,36 @@ void RenderContext::draw(BYTE* buffer)
 	}
 
 	size_t vertexNum = m_vertexBuffer->getNumOfEle();
-	Vertex* vertexData = static_cast<Vertex*>(m_vertexBuffer->getData());
-	Fragment* tempVertex = new Fragment[vertexNum];
-
 	//顶点着色
 	for (size_t i = 0; i < vertexNum; ++i)
 	{
-		m_vertexShader(vertexData[i], tempVertex[i]);
+		m_vertexShader(m_vertexData[i], m_tempVertex[i]);
 	}
 	
 	//构建三角形
 	size_t triangleNum = m_indexBuffer->getNumOfEle() / 3;
 	size_t* indexData = static_cast<size_t*>(m_indexBuffer->getData());
-	Triangle* triangles = new Triangle[triangleNum];
 	size_t begin;
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
 		begin = i * 3;
-		triangles[i].vertex[0] = tempVertex[indexData[begin]];
-		triangles[i].vertex[1] = tempVertex[indexData[begin + 1]];
-		triangles[i].vertex[2] = tempVertex[indexData[begin + 2]];
+		m_triangles[i].vertex[0] = m_tempVertex[indexData[begin]];
+		m_triangles[i].vertex[1] = m_tempVertex[indexData[begin + 1]];
+		m_triangles[i].vertex[2] = m_tempVertex[indexData[begin + 2]];
 	}
-	delete[] tempVertex;
-	
 	//todo-clip
-	CVVClip(&triangles, triangleNum);
+	CVVClip(&m_triangles, triangleNum);
 
 	std::vector<Fragment> fragments;
 	std::vector<Vec2i> pixels;
-	
+
+	Vec3f* fragmentOut = new Vec3f();
 	for (size_t i = 0; i < triangleNum; ++i)
 	{
-		m_rasterizer->rasterize(triangles[i], fragments, pixels, m_depthBuffer);
+		m_rasterizer->rasterize(m_triangles[i], fragments, pixels, m_depthBuffer);
 		//m_rasterizer->rasterizeBorder(triangles[i], fragments, pixels);
 
 		size_t fragmentSize = fragments.size();
-		Vec3f* fragmentOut = new Vec3f();
-
 		for (size_t j = 0; j < fragmentSize; ++j)
 		{
 			m_fragmentShader(fragments[j], fragmentOut);
@@ -111,8 +108,6 @@ void RenderContext::draw(BYTE* buffer)
 
 		fragments.clear();
 		pixels.clear();
-		delete fragmentOut;
 	}
-
-	delete[] triangles;
+	delete fragmentOut;
 }

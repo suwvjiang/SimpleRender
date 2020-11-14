@@ -344,7 +344,7 @@ inline void closeClip(std::vector<Fragment>& outFrags, std::vector<Fragment*>& f
 		}
 	}
 }
-//递归之法，或有重复添加交互之嫌
+//递归之法，或有重复添加交点之嫌
 inline void clipTriangleBySuthHodgIn3D(const Triangle& triangle, std::vector<Triangle>& destTriangles)
 {
 	std::vector<Fragment> outFrags;
