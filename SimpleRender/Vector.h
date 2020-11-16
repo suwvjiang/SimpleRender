@@ -19,66 +19,66 @@ struct Vector2
 		struct { T u, v; };
 	};
 
-	Vector2() :x(0), y(0) {};
-	Vector2(const T& _x) :x(_x), y(_x) {};
-	Vector2(const T& _x, const T _y) :x(_x), y(_y) {};
-	Vector2(const Vector2& v) :x(v.x), y(v.y) {};
-	const Vector2& operator = (const Vector2& v)
+	inline Vector2() :x(0), y(0) {};
+	inline Vector2(const T& _x) :x(_x), y(_x) {};
+	inline Vector2(const T& _x, const T _y) :x(_x), y(_y) {};
+	inline Vector2(const Vector2& v) :x(v.x), y(v.y) {};
+	inline const Vector2& operator = (const Vector2& v)
 	{
 		x = v.x;
 		y = v.y;
 		return *this;
 	}
 
-	Vector2 operator + (const Vector2& rhs) const { return Vector2(x + rhs.x, y + rhs.y); }
-	Vector2 operator - (const Vector2& rhs) const { return Vector2(x - rhs.x, y - rhs.y); }
-	Vector2 operator += (const Vector2& rhs) 
+	inline Vector2 operator + (const Vector2& rhs) const { return Vector2(x + rhs.x, y + rhs.y); }
+	inline Vector2 operator - (const Vector2& rhs) const { return Vector2(x - rhs.x, y - rhs.y); }
+	inline Vector2 operator += (const Vector2& rhs)
 	{
 		x += rhs.x;
 		y += rhs.y;
 		return *this;
 	}
-	Vector2 operator -= (const Vector2& rhs)
+	inline Vector2 operator -= (const Vector2& rhs)
 	{
 		x -= rhs.x;
 		y -= rhs.y;
 		return *this;
 	}
 
-	Vector2 operator + (const T& rhs) const { return Vector2(x + rhs, y + rhs); }
-	Vector2 operator - (const T& rhs) const { return Vector2(x - rhs, y - rhs); }
-	Vector2 operator * (const T& rhs) const { return Vector2(x * rhs, y * rhs); }
-	Vector2 operator / (const T& rhs) const { return Vector2(x / rhs, y / rhs); }
-	Vector2 operator += (const T& rhs)
+	inline Vector2 operator + (const T& rhs) const { return Vector2(x + rhs, y + rhs); }
+	inline Vector2 operator - (const T& rhs) const { return Vector2(x - rhs, y - rhs); }
+	inline Vector2 operator * (const T& rhs) const { return Vector2(x * rhs, y * rhs); }
+	inline Vector2 operator / (const T& rhs) const { return Vector2(x / rhs, y / rhs); }
+	inline Vector2 operator += (const T& rhs)
 	{
 		x += rhs;
 		y += rhs;
 		return *this;
 	}
-	Vector2 operator -= (const T& rhs)
+	inline Vector2 operator -= (const T& rhs)
 	{
 		x -= rhs;
 		y -= rhs;
 		return *this;
 	}
-	Vector2 operator *= (const T& rhs)
+	inline Vector2 operator *= (const T& rhs)
 	{
 		x *= rhs;
 		y *= rhs;
 		return *this;
 	}
-	Vector2 operator /=(const T& rhs)
+	inline Vector2 operator /=(const T& rhs)
 	{
 		x /= rhs;
 		y /= rhs;
 		return *this;
 	}
 
-	bool operator ==(const Vector2& rhs)const { return (x = rhs.x && y == rhs.y); }
-	bool operator !=(const Vector2& rhs)const { return !(*this == rhs); }
-	float lengthSqr() { return x * x + y * y; }
-	float length() { return sqrf(lengthSqr()); }
-	void normalize() { *this /= length(); }
+	inline bool operator ==(const Vector2& rhs)const { return (x = rhs.x && y == rhs.y); }
+	inline bool operator !=(const Vector2& rhs)const { return !(*this == rhs); }
+	inline float lengthSqr() { return x * x + y * y; }
+	inline float length() { return sqrf(lengthSqr()); }
+	inline void normalize() { *this /= length(); }
 };
 
 /*-----------------------*/
@@ -152,12 +152,12 @@ struct Vector3
 	/*--------------*/
 	/* Constructors */
 	/*--------------*/
-	Vector3():x(0), y(0), z(0) {};
-	Vector3(const T& _x) :x(_x), y(_x), z(_x) {};
-	Vector3(const T& _x, const T& _y, const T& _z) :x(_x), y(_y), z(_z) {};
+	inline Vector3():x(0), y(0), z(0) {};
+	inline Vector3(const T& _x) :x(_x), y(_x), z(_x) {};
+	inline Vector3(const T& _x, const T& _y, const T& _z) :x(_x), y(_y), z(_z) {};
 	//Vector3(const T* t) : x(t[0]), y(t[1]), t(t[2]) {};
-	Vector3(const Vector3& v) :x(v.x), y(v.y), z(v.z) {};
-	const Vector3& operator = (const Vector3& v)
+	inline Vector3(const Vector3& v) :x(v.x), y(v.y), z(v.z) {};
+	inline const Vector3& operator = (const Vector3& v)
 	{
 		x = v.x;
 		y = v.y;
@@ -168,17 +168,17 @@ struct Vector3
 	/*-------------------*/
 	/* Basic Vector Math */
 	/*-------------------*/
-	Vector3 operator + (const Vector3& rhs) const
+	inline Vector3 operator + (const Vector3& rhs) const
 	{
 		return Vector3(x + rhs.x, y + rhs.y, z + rhs.z);
 	}
 
-	Vector3 operator - (const Vector3& rhs) const
+	inline Vector3 operator - (const Vector3& rhs) const
 	{
 		return Vector3(x - rhs.x, y - rhs.y, z - rhs.z);
 	}
 
-	const Vector3& operator += (const Vector3& rhs)
+	inline const Vector3& operator += (const Vector3& rhs)
 	{
 		x += rhs.x;
 		y += rhs.y;
@@ -186,7 +186,7 @@ struct Vector3
 		return *this;
 	}
 
-	const Vector3& operator -= (const Vector3& rhs)
+	inline const Vector3& operator -= (const Vector3& rhs)
 	{
 		x -= rhs.x;
 		y -= rhs.y;
@@ -197,27 +197,27 @@ struct Vector3
 	/*-------------------*/
 	/* Basic Scalar Math */
 	/*-------------------*/
-	Vector3 operator + (const T& rhs) const
+	inline Vector3 operator + (const T& rhs) const
 	{
 		return Vector3(x + rhs, y + rhs, z + rhs);
 	}
 
-	Vector3 operator -(const T& rhs) const
+	inline Vector3 operator -(const T& rhs) const
 	{
 		return Vector3(x - rhs, y - rhs, z - rhs);
 	}
 
-	Vector3 operator * (const T& rhs) const
+	inline Vector3 operator * (const T& rhs) const
 	{
 		return Vector3(x * rhs, y * rhs, z * rhs);
 	}
 
-	Vector3 operator / (const T& rhs) const
+	inline Vector3 operator / (const T& rhs) const
 	{
 		return Vector3(x / rhs, y / rhs, z / rhs);
 	}
 
-	const Vector3& operator += (const T& rhs)
+	inline const Vector3& operator += (const T& rhs)
 	{
 		x += rhs;
 		y += rhs;
@@ -225,7 +225,7 @@ struct Vector3
 		return *this;
 	}
 
-	const Vector3& operator -= (const T& rhs)
+	inline const Vector3& operator -= (const T& rhs)
 	{
 		x -= rhs;
 		y -= rhs;
@@ -233,7 +233,7 @@ struct Vector3
 		return *this;
 	}
 
-	const Vector3& operator *= (const T& rhs)
+	inline const Vector3& operator *= (const T& rhs)
 	{
 		x *= rhs;
 		y *= rhs;
@@ -241,7 +241,7 @@ struct Vector3
 		return *this;
 	}
 
-	const Vector3& operator /= (const T& rhs)
+	inline const Vector3& operator /= (const T& rhs)
 	{
 		x /= rhs;
 		y /= rhs;
@@ -252,27 +252,27 @@ struct Vector3
 	/*------------*/
 	/* Other Math */
 	/*------------*/
-	bool operator == (const Vector3& rhs) const
+	inline bool operator == (const Vector3& rhs) const
 	{
 		return (x == rhs.x && y == rhs.y && z == rhs.z);
 	}
 
-	bool operator != (const Vector3& rhs) const
+	inline bool operator != (const Vector3& rhs) const
 	{
 		return !(*this == rhs);
 	}
 
-	float lengthSqr() const
+	inline float lengthSqr() const
 	{
 		return x * x + y * y + z * z;
 	}
 
-	float length() const
+	inline float length() const
 	{
 		return sqrt(lengthSqr());
 	}
 
-	void normalize()
+	inline void normalize()
 	{
 		*this /= length();
 	}
@@ -328,7 +328,7 @@ std::istream& operator>>(std::istream& lhs, Vector3<T>& rhs)
 }
 
 template<typename U>
-Vector3<U> operator*(const float& lhs, Vector3<U>& rhs)
+inline Vector3<U> operator*(const float& lhs, Vector3<U>& rhs)
 {
 	return rhs * lhs;
 }
@@ -361,12 +361,12 @@ struct Vector4
 	/*--------------*/
 	/* Constructors */
 	/*--------------*/
-	Vector4():x(0), y(0), z(0), w(1) {};
-	Vector4(const T& _x) :x(_x), y(_x), z(_x), w(_x) {};
-	Vector4(const T& _x, const T& _y, const T& _z, const T& _w = 1) : x(_x), y(_y), z(_z), w(_w) {};
-	Vector4(const T* t) :x(t[0]), y(t[1]), z(t[2]), w(t[3]) {};
-	Vector4(const Vector4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {};
-	const Vector4& operator = (const Vector4& v)
+	inline Vector4():x(0), y(0), z(0), w(1) {};
+	inline Vector4(const T& _x) :x(_x), y(_x), z(_x), w(_x) {};
+	inline Vector4(const T& _x, const T& _y, const T& _z, const T& _w = 1) : x(_x), y(_y), z(_z), w(_w) {};
+	inline Vector4(const T* t) :x(t[0]), y(t[1]), z(t[2]), w(t[3]) {};
+	inline Vector4(const Vector4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {};
+	inline const Vector4& operator = (const Vector4& v)
 	{
 		x = v.x;
 		y = v.y;
@@ -378,17 +378,17 @@ struct Vector4
 	/*-------------------*/
 	/* Basic Vector Math */
 	/*-------------------*/
-	Vector4 operator + (const Vector4& rhs) const
+	inline Vector4 operator + (const Vector4& rhs) const
 	{
 		return Vector4(x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w);
 	}
 
-	Vector4 operator - (const Vector4& rhs) const
+	inline Vector4 operator - (const Vector4& rhs) const
 	{
 		return Vector4(x - rhs.x, y - rhs.y, z - rhs.z, w - rhs.w);
 	}
 
-	const Vector4& operator += (const Vector4& rhs)
+	inline const Vector4& operator += (const Vector4& rhs)
 	{
 		x += rhs.x;
 		y += rhs.y;
@@ -397,7 +397,7 @@ struct Vector4
 		return *this;
 	}
 
-	const Vector4& operator -= (const Vector4& rhs)
+	inline const Vector4& operator -= (const Vector4& rhs)
 	{
 		x -= rhs.x;
 		y -= rhs.y;
@@ -409,27 +409,27 @@ struct Vector4
 	/*-------------------*/
 	/* Basic Scalar Math */
 	/*-------------------*/
-	Vector4 operator + (const T& rhs) const
+	inline Vector4 operator + (const T& rhs) const
 	{
 		return Vector4(x + rhs, y + rhs, z + rhs, w + rhs);
 	}
 
-	Vector4 operator - (const T& rhs) const
+	inline Vector4 operator - (const T& rhs) const
 	{
 		return Vector4(x - rhs, y - rhs, z - rhs, w - rhs);
 	}
 
-	Vector4 operator * (const T& rhs) const
+	inline Vector4 operator * (const T& rhs) const
 	{
 		return Vector4(x * rhs, y * rhs, z * rhs, w * rhs);
 	}
 
-	Vector4 operator / (const T& rhs) const
+	inline Vector4 operator / (const T& rhs) const
 	{
 		return Vector4(x / rhs, y / rhs, z / rhs, w / rhs);
 	}
 
-	const Vector4& operator += (const T& rhs)
+	inline const Vector4& operator += (const T& rhs)
 	{
 		x += rhs;
 		y += rhs;
@@ -438,7 +438,7 @@ struct Vector4
 		return *this;
 	}
 
-	const Vector4& operator -= (const T& rhs)
+	inline const Vector4& operator -= (const T& rhs)
 	{
 		x -= rhs;
 		y -= rhs;
@@ -447,7 +447,7 @@ struct Vector4
 		return *this;
 	}
 
-	const Vector4& operator *= (const T& rhs)
+	inline const Vector4& operator *= (const T& rhs)
 	{
 		x *= rhs;
 		y *= rhs;
@@ -456,7 +456,7 @@ struct Vector4
 		return *this;
 	}
 
-	const Vector4& operator /= (const T& rhs)
+	inline const Vector4& operator /= (const T& rhs)
 	{
 		x /= rhs;
 		y /= rhs;
@@ -468,27 +468,27 @@ struct Vector4
 	/*------------*/
 	/* Other Math */
 	/*------------*/
-	bool operator == (const Vector4& rhs) const
+	inline bool operator == (const Vector4& rhs) const
 	{
 		return (x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w);
 	}
 
-	bool operator != (const Vector4& rhs) const
+	inline bool operator != (const Vector4& rhs) const
 	{
 		return !(*this == rhs);
 	}
 
-	float lengthSqr() const
+	inline float lengthSqr() const
 	{
 		return x * x + y * y + z * z;
 	}
 
-	float length() const
+	inline float length() const
 	{
 		return sqrt(lengthSqr());
 	}
 
-	void normalize()
+	inline void normalize()
 	{
 		float len = length();
 		x /= len;
@@ -508,7 +508,7 @@ inline float Dot(const Vector4<U>& lhs, const Vector4<U>& rhs)
 }
 
 template<typename U>
-Vector4<U> Cross(const Vector4<U>& lhs, const Vector4<U>& rhs)
+inline Vector4<U> Cross(const Vector4<U>& lhs, const Vector4<U>& rhs)
 {
 	return Vector4<U>(lhs.y * rhs.z - lhs.z * rhs.y,
 		lhs.z * rhs.x - lhs.x * rhs.z,
@@ -550,7 +550,7 @@ std::istream& operator>>(std::istream& lhs, Vector4<T>& rhs)
 }
 
 template<typename U>
-Vector4<U> operator*(const U& lhs, Vector4<U>& rhs)
+inline Vector4<U> operator*(const U& lhs, Vector4<U>& rhs)
 {
 	return rhs * lhs;
 }
