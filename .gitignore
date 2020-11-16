@@ -7,3 +7,4 @@
 /SimpleRender/SimpleRender.vcxproj.filters
 /SimpleRender/SimpleRender.vcxproj
 /Debug
+*.diagsession
