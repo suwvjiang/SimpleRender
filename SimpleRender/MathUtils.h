@@ -334,3 +334,47 @@ Matrix4x4<T> Matrix4x4Screen(const Vector2<T>& center, const float& width, const
 	return mat;
 }
 #pragma endregion
+
+#pragma region Tringle Geometry
+//检测线段相交
+inline bool FasterLineSegmentIntersection(const Vec2i& a, const Vec2i& b, const Vec2i& c, const Vec2i& d)
+{
+	Vec2i ab = b - a;
+	Vec2i cd = d - c;
+
+	Vec2i ac = c - a;
+	Vec2i ad = d - a;
+	Vec2i cb = b - c;
+
+	float t = Cross(ac, ab) * Cross(ad, ab);
+	float p = Cross(cd, ac) * Cross(cb, cd);//Cross(cd, ac) = Cross(ac, cd)
+	return (t <= 0) && (p <= 0);
+}
+//检测线段与三角形相交
+inline bool SegmenTriangleIntersection(const Vec2i& a, const Vec2i& b, const Vec2i& v0, const Vec2i& v1, const Vec2i& v2)
+{
+	if (FasterLineSegmentIntersection(a, b, v0, v1)
+		|| FasterLineSegmentIntersection(a, b, v1, v2)
+		|| FasterLineSegmentIntersection(a, b, v2, v1))
+	{
+		return true;
+	}
+	return false;
+}
+//检测方块与三角形相交
+inline bool BlockTriangleSegmentIntersection(const Vec2i& lt, const int blockSize, const Vec2i& v0, const Vec2i& v1, const Vec2i& v2)
+{
+	Vec2i rt(lt.x + blockSize - 1, lt.y);
+	Vec2i lb(lt.x, lt.y + blockSize - 1);
+	Vec2i rb(lt.x + blockSize - 1, lt.y + blockSize - 1);
+
+	if (SegmenTriangleIntersection(lt, rt, v0, v1, v2)
+		|| SegmenTriangleIntersection(lt, lb, v0, v1, v2)
+		|| SegmenTriangleIntersection(rt, rb, v0, v1, v2)
+		|| SegmenTriangleIntersection(lb, rb, v0, v1, v2))
+	{
+		return true;
+	}
+	return false;
+}
+#pragma endregion

@@ -168,24 +168,24 @@ void RenderDevice::initMeshInfo()
 	loadObj(objPath, vertices, indexs);
 
 	BufferDesc vertexDesc;
-	/*vertexDesc.stride = sizeof(Vertex);
+	vertexDesc.stride = sizeof(Vertex);
 	vertexDesc.numOfEle = 24;
 	vertexDesc.data = v;
-	vertexDesc.bufferSize = sizeof(Vertex) * 24; */
-	vertexDesc.stride = sizeof(Vertex);
+	vertexDesc.bufferSize = sizeof(Vertex) * 24; 
+	/*vertexDesc.stride = sizeof(Vertex);
 	vertexDesc.numOfEle = vertices.size();
 	vertexDesc.data = vertices.data();
-	vertexDesc.bufferSize = sizeof(Vertex) * vertices.size();
+	vertexDesc.bufferSize = sizeof(Vertex) * vertices.size();*/
 
 	BufferDesc indexDesc;
-	/*indexDesc.stride = sizeof(size_t);
+	indexDesc.stride = sizeof(size_t);
 	indexDesc.numOfEle = 36;
 	indexDesc.data = i;
-	indexDesc.bufferSize = sizeof(size_t) * 36;*/
-	indexDesc.stride = sizeof(size_t);
+	indexDesc.bufferSize = sizeof(size_t) * 36;
+	/*indexDesc.stride = sizeof(size_t);
 	indexDesc.numOfEle = indexs.size();
 	indexDesc.data = indexs.data();
-	indexDesc.bufferSize = sizeof(size_t) * indexs.size();
+	indexDesc.bufferSize = sizeof(size_t) * indexs.size();*/
 
 	m_vertexBuffer = createBuffer(vertexDesc);
 	m_indexBuffer = createBuffer(indexDesc);
