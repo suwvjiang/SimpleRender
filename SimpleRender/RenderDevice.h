@@ -10,6 +10,7 @@ class RenderDevice
 {
 private:
 	bool m_inited = false;
+	bool m_rotateEnable = false;
 	bool m_rotateCamera = false;
 
 	int winWidth, winHeight;
@@ -46,6 +47,7 @@ public:
 
 	void initMeshInfo();
 
+	void switchRotateEnable() { m_rotateEnable = !m_rotateEnable; }
 	void switchCameraRotate() { m_rotateCamera = !m_rotateCamera; }
 	void sliderCamera(float delta) { m_radius += delta; }
 	void scaleModel(float scale) { m_scale += scale; }

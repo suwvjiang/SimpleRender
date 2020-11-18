@@ -170,19 +170,19 @@ using RasterizerInterpolationFunc = std::function<void(const Fragment & frag0, c
 inline void BaseInterpolationFunc(const Fragment& frag0, const Fragment& frag1, const Fragment& frag2,
 	const float& t0, const float& t1, const float& t2, Fragment& destFrag)
 {
-	destFrag.pos += frag0.pos * t0;
+	destFrag.pos = frag0.pos * t0;
 	destFrag.pos += frag1.pos * t1;
 	destFrag.pos += frag2.pos * t2;
 
-	destFrag.normal += frag0.normal * t0;
+	destFrag.normal = frag0.normal * t0;
 	destFrag.normal += frag1.normal * t1;
 	destFrag.normal += frag2.normal * t2;
 
-	destFrag.uv += frag0.uv * t0;
+	destFrag.uv = frag0.uv * t0;
 	destFrag.uv += frag1.uv * t1;
 	destFrag.uv += frag2.uv * t2;
 
-	destFrag.color += frag0.color * t0;
+	destFrag.color = frag0.color * t0;
 	destFrag.color += frag1.color * t1;
 	destFrag.color += frag2.color * t2;
 }
@@ -228,8 +228,9 @@ public:
 		if ((minX > maxX) || (minY > maxY))
 			return;
 
-		int index = (minY - m_viewPort.getLTY()) * m_viewPort.width + (minX - m_viewPort.getLTX());
-		int index_delta = m_viewPort.width - maxX + minX;
+		EdgeEquation area(p0, p1, p2);
+		if (area.value > 0)
+			return;
 
 		auto noBlockSize = ~(Block_Size - 1);
 		minX &= noBlockSize;
@@ -237,15 +238,15 @@ public:
 		maxX &= noBlockSize;
 		maxY &= noBlockSize;
 
-		EdgeEquation area(p0, p1, p2);
-		if (area.value > 0)
-			return;
+		maxX += Block_Size;
+		maxY += Block_Size;
 
 		p.x = minX;
 		p.y = minY;
 		EdgeEquationSet tempY(p0, p1, p2, p);
 		EdgeEquationSet tempX;
 
+		// Tile Render
 		int i, j;
 		float z0, z1, z2;
 		float param0, param1, param2, cameraZ, depth;
@@ -274,7 +275,7 @@ public:
 
 				if (ltIn && rbIn && rtIn && lbIn)//块在三角形内
 				{
-					renderInsideBlock(triangle, inv_camera_z, area.value, lt, i, j, index, index_delta, frag, pixels, depthBuffer);
+					renderInsideBlock(triangle, inv_camera_z, area.value, lt, i, j, frag, pixels, depthBuffer);
 					continue;
 				}
 				else if (!ltIn && !rbIn && !rtIn && !lbIn)//块在三角形外
@@ -289,17 +290,17 @@ public:
 						|| pointInAABB(aabbMin, aabbMax, p1)
 						|| pointInAABB(aabbMin, aabbMax, p2))
 					{
-						renderIntersetorBlock(triangle, inv_camera_z, area.value, lt, i, j, index, index_delta, frag, pixels, depthBuffer);
+						renderIntersetorBlock(triangle, inv_camera_z, area.value, lt, i, j, frag, pixels, depthBuffer);
 						continue;
 					}
 					else if (BlockTriangleSegmentIntersection(aabbMin, Block_Size, p0, p1, p2))
 					{
-						renderIntersetorBlock(triangle, inv_camera_z, area.value, lt, i, j, index, index_delta, frag, pixels, depthBuffer);
+						renderIntersetorBlock(triangle, inv_camera_z, area.value, lt, i, j, frag, pixels, depthBuffer);
 						continue;
 					}
 					continue;
 				}
-				renderIntersetorBlock(triangle, inv_camera_z, area.value, lt, i, j, index, index_delta, frag, pixels, depthBuffer);
+				renderIntersetorBlock(triangle, inv_camera_z, area.value, lt, i, j, frag, pixels, depthBuffer);
 			}
 			tempY.incrementY(Block_Size);
 		}
@@ -410,15 +411,15 @@ private:
 	}
 
 	void renderInsideBlock(const Triangle& triangle, const float(&inv_camera_z)[3], const int& area, const EdgeEquationSet& set,
-		const int& px, const int& py, const int& index_start, const int& index_delta, 
-		std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
+		const int& px, const int& py, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
 	{
 		EdgeEquationSet tempY = set;
 		EdgeEquationSet tempX;
 
 		int x_end = px + Block_Size;
 		int y_end = py + Block_Size;
-		int index = index_start;
+		int index = (py - m_viewPort.getLTY()) * m_viewPort.width + (px - m_viewPort.getLTX());
+		int index_delta = m_viewPort.width - Block_Size;
 
 		float z0, z1, z2;
 		float param0, param1, param2, cameraZ, depth;
@@ -427,9 +428,9 @@ private:
 			tempX = tempY;
 			for (int i = px; i < x_end; ++i)
 			{
-				param0 = float(tempX.e0.value) * inv_camera_z[0] / area;
-				param1 = float(tempX.e1.value) * inv_camera_z[1] / area;
-				param2 = float(tempX.e2.value) * inv_camera_z[2] / area;
+				param0 = inv_camera_z[0] * float(tempX.e0.value) / area;
+				param1 = inv_camera_z[1] * float(tempX.e1.value) / area;
+				param2 = inv_camera_z[2] * float(tempX.e2.value) / area;
 				// z in viewport
 				cameraZ = 1 / (param0 + param1 + param2);
 
@@ -452,25 +453,29 @@ private:
 					frag.emplace_back(fragDest);
 				}
 
-				index++;
-				tempX.incrementX();
+				index++; 
+				tempX.e0.value += tempX.e0.i;
+				tempX.e1.value += tempX.e1.i;
+				tempX.e2.value += tempX.e2.i;
 			}
 
 			index += index_delta;
-			tempY.incrementY();
+			tempY.e0.value += tempY.e0.j;
+			tempY.e1.value += tempY.e1.j;
+			tempY.e2.value += tempY.e2.j;
 		}
 	}
 
 	void renderIntersetorBlock(const Triangle& triangle, const float(&inv_camera_z)[3], const int& area, const EdgeEquationSet& set,
-		const int& px, const int& py, const int& index_start, const int& index_delta,
-		std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
+		const int& px, const int& py, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
 	{
 		EdgeEquationSet tempY = set;
 		EdgeEquationSet tempX;
 
 		int x_end = px + Block_Size;
 		int y_end = py + Block_Size;
-		int index = index_start;
+		int index = (py - m_viewPort.getLTY()) * m_viewPort.width + (px - m_viewPort.getLTX());
+		int index_delta = m_viewPort.width - Block_Size;
 
 		float z0, z1, z2;
 		float param0, param1, param2, cameraZ, depth;
@@ -479,21 +484,20 @@ private:
 			tempX = tempY;
 			for (int i = px; i < x_end; ++i)
 			{
-				if (tempX.evaluate())
+				if (tempX.e0.value <= 0 && tempX.e1.value <= 0 && tempX.e2.value <= 0)
 				{
-					param0 = float(tempX.e0.value) * inv_camera_z[0] / area;
-					param1 = float(tempX.e1.value) * inv_camera_z[1] / area;
-					param2 = float(tempX.e2.value) * inv_camera_z[2] / area;
+					//https://zhuanlan.zhihu.com/p/31780748
+					param0 = inv_camera_z[0] * float(tempX.e0.value) / area;
+					param1 = inv_camera_z[1] * float(tempX.e1.value) / area;
+					param2 = inv_camera_z[2] * float(tempX.e2.value) / area;
 					// z in viewport
 					cameraZ = 1 / (param0 + param1 + param2);
 
-					param0 *= cameraZ;
-					param1 *= cameraZ;
-					param2 *= cameraZ;
 					//depth = z in ndc space
 					depth = triangle.vertex[0].pos.z * param0;
 					depth += triangle.vertex[1].pos.z * param1;
 					depth += triangle.vertex[2].pos.z * param2;
+					depth *= cameraZ;
 
 					if (depth < depthBuffer[index])
 					{
@@ -507,11 +511,15 @@ private:
 					}
 				}
 
-				index++;
-				tempX.incrementX();
+				index++; 
+				tempX.e0.value += tempX.e0.i;
+				tempX.e1.value += tempX.e1.i;
+				tempX.e2.value += tempX.e2.i;
 			}
 			index += index_delta;
-			tempY.incrementY();
+			tempY.e0.value += tempY.e0.j;
+			tempY.e1.value += tempY.e1.j;
+			tempY.e2.value += tempY.e2.j;
 		}
 	}
 

@@ -157,8 +157,11 @@ LRESULT OnEvent(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case VK_RIGHT:
 			device->scaleModel(-0.1f);
 			break;
-		case VK_SPACE:
+		case VK_RETURN:
 			device->switchCameraRotate();
+			break;
+		case VK_SPACE:
+			device->switchRotateEnable();
 			break;
 		default:
 			break;
