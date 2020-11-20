@@ -154,9 +154,7 @@ struct ShaderStruct
 		float nl = Dot(n, l);
 		nl = 0.5f * nl + 0.5f;
 
-		(*output).x = nl;
-		(*output).y = nl;
-		(*output).z = nl;
+		(*output) = Vec3f(nl);
 	}
 
 };

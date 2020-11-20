@@ -1,6 +1,5 @@
 #include "RenderDevice.h"
 #include "Rasterizer.h"
-#include "ObjParse.h"
 
 ShaderStruct::ConstBuffer ShaderStruct::constBuffer;
 
@@ -11,8 +10,6 @@ RenderDevice::RenderDevice()
 RenderDevice::~RenderDevice()
 {
 	m_context3D = nullptr;
-	m_vertexBuffer = nullptr;
-	m_indexBuffer = nullptr;
 	m_camera = nullptr;
 
 	delete[] m_fragmentBuff;
@@ -25,19 +22,25 @@ bool RenderDevice::isInited()
 
 void RenderDevice::initDevice(int width, int height)
 {
-	m_fragmentBuff = new BYTE[width * height * PIX_BITS / 8];
-	memset(m_fragmentBuff, 45, width * height * PIX_BITS / 8);
-
 	winWidth = width;
-	winHeight = height; 
+	winHeight = height;
+	m_bufferSize = width * height;
 
-	m_viewPort.width = width-50;
-	m_viewPort.height = height-50;
+	m_fragmentBuff = new BYTE[m_bufferSize * PIX_BITS / 8];
+	memset(m_fragmentBuff, 45, m_bufferSize * PIX_BITS / 8);
+
+	m_depthBuffer = new float[m_bufferSize];
+	for (int i = m_bufferSize - 1; i >= 0; --i)
+		m_depthBuffer[i] = 1.0f;
+
+	m_viewPort.width = width;
+	m_viewPort.height = height;
 	m_viewPort.originX = width >> 1;
 	m_viewPort.originY = height >> 1;
 
 	m_context3D = std::make_shared<RenderContext>();
 	m_context3D->setViewport(width, height, m_viewPort);
+	m_context3D->initMeshInfo();
 
 	m_radius = 5;
 	m_camera = std::make_shared<Camera>();
@@ -54,18 +57,18 @@ void RenderDevice::initDevice(int width, int height)
 
 	ShaderStruct::constBuffer.world = Matrix4x4TranslationFromVector<float>(m_origin);
 	ShaderStruct::constBuffer.lightDir = Vec3f(1, 1, 1);
-
-	initMeshInfo();
 }
 
 void RenderDevice::releaseDevice()
 {
-
 }
 
 void RenderDevice::clear()
 {
-	memset(m_fragmentBuff, 45, winWidth * winHeight * PIX_BITS / 8);
+	memset(m_fragmentBuff, 45, m_bufferSize * PIX_BITS / 8);
+
+	for (int i = m_bufferSize - 1; i >= 0; --i)
+		m_depthBuffer[i] = 1.0f;
 }
 
 const static float Rotate_Speed = 360.0;
@@ -85,8 +88,9 @@ void RenderDevice::update()
 	m_camera->update();
 	ShaderStruct::constBuffer.view_proj = m_camera->viewProjMatrix();
 
-	Matrix4x4f mtrans = Matrix4x4RotationY<float>(m_angle) * Matrix4x4Scaling<float>(m_scale, m_scale, m_scale);
-	ShaderStruct::constBuffer.obj2world = ShaderStruct::constBuffer.world * mtrans;
+	m_context3D->setLocalRotate(0, m_angle, 0);
+	m_context3D->setLocalScale(m_scale, m_scale, m_scale);
+	ShaderStruct::constBuffer.obj2world = ShaderStruct::constBuffer.world * m_context3D->getTransform();
 	ShaderStruct::constBuffer.m_v_p = m_camera->viewProjMatrix() * ShaderStruct::constBuffer.obj2world;
 }
 //»æÖÆ
@@ -96,111 +100,7 @@ void RenderDevice::drawcall()
 	Vec2i viewportMax = Vec2i(m_viewPort.originX + (m_viewPort.width >> 1), m_viewPort.originY + (m_viewPort.height >> 1));
 	drawViewportArea(viewportMin, viewportMax);
 	
-	m_context3D->clearDepthBuffer();
-	m_context3D->setVertexShader(ShaderStruct::VS);
-	m_context3D->setFragmentShader(ShaderStruct::LightFS);
-
-	m_context3D->draw(m_fragmentBuff);
-}
-
-void RenderDevice::initMeshInfo()
-{
-#pragma region Panel
-	float w2 = 1;
-	float h2 = 1;
-	float d2 = 1;
-
-	//Vertex
-	Vertex v[24];
-	v[0] = Vertex(-w2, -h2, -d2, 1, 0, 0, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
-	v[1] = Vertex(-w2, +h2, -d2, 1, 1, 0, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
-	v[2] = Vertex(+w2, +h2, -d2, 0, 1, 1, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
-	v[3] = Vertex(+w2, -h2, -d2, 1, 0, 1, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
-
-	v[4] = Vertex(-w2, -h2, +d2, 0, 1, 1, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-	v[5] = Vertex(+w2, -h2, +d2, 0, 1, 0, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-	v[6] = Vertex(+w2, +h2, +d2, 1, 0, 0, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
-	v[7] = Vertex(-w2, +h2, +d2, 0, 0, 1, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
-
-	v[8] = Vertex(-w2, +h2, -d2, 1, 1, 0, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f);
-	v[9] = Vertex(-w2, +h2, +d2, 0, 0, 1, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f);
-	v[10] = Vertex(+w2, +h2, +d2, 1, 0, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f);
-	v[11] = Vertex(+w2, +h2, -d2, 0, 1, 1, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-
-	v[12] = Vertex(-w2, -h2, -d2, 1, 0, 0, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f);
-	v[13] = Vertex(+w2, -h2, -d2, 1, 0, 1, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f);
-	v[14] = Vertex(+w2, -h2, +d2, 0, 1, 0, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f);
-	v[15] = Vertex(-w2, -h2, +d2, 0, 1, 1, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
-
-	v[16] = Vertex(-w2, -h2, +d2, 0, 1, 1, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[17] = Vertex(-w2, +h2, +d2, 0, 0, 1, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[18] = Vertex(-w2, +h2, -d2, 1, 1, 0, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[19] = Vertex(-w2, -h2, -d2, 1, 0, 0, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-	v[20] = Vertex(+w2, -h2, -d2, 1, 0, 1, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[21] = Vertex(+w2, +h2, -d2, 0, 1, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[22] = Vertex(+w2, +h2, +d2, 1, 0, 0, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[23] = Vertex(+w2, -h2, +d2, 0, 1, 0, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	
-	//Index
-	//ÄæÊ±Õë
-	size_t i[36];
-	i[0] = 0; i[1] = 1; i[2] = 2;
-	i[3] = 0; i[4] = 2; i[5] = 3;
-
-	i[6] = 4; i[7] = 5; i[8] = 6;
-	i[9] = 4; i[10] = 6; i[11] = 7;
-
-	i[12] = 8; i[13] = 9; i[14] = 10;
-	i[15] = 8; i[16] = 10; i[17] = 11;
-
-	i[18] = 12; i[19] = 13; i[20] = 14;
-	i[21] = 12; i[22] = 14; i[23] = 15;
-
-	i[24] = 16; i[25] = 17; i[26] = 18;
-	i[27] = 16; i[28] = 18; i[29] = 19;
-
-	i[30] = 20; i[31] = 21; i[32] = 22;
-	i[33] = 20; i[34] = 22; i[35] = 23;
-#pragma endregion
-
-	std::vector<Vertex> vertices;
-	std::vector<int> indexs;
-
-	string objPath("D:\\Projects\\SimpleRender\\model\\african_head\\african_head.obj");
-	loadObj(objPath, vertices, indexs);
-
-	BufferDesc vertexDesc;
-	/*vertexDesc.stride = sizeof(Vertex);
-	vertexDesc.numOfEle = 24;
-	vertexDesc.data = v;
-	vertexDesc.bufferSize = sizeof(Vertex) * 24;*/ 
-	vertexDesc.stride = sizeof(Vertex);
-	vertexDesc.numOfEle = vertices.size();
-	vertexDesc.data = vertices.data();
-	vertexDesc.bufferSize = sizeof(Vertex) * vertices.size();
-
-	BufferDesc indexDesc;
-	/*indexDesc.stride = sizeof(size_t);
-	indexDesc.numOfEle = 36;
-	indexDesc.data = i;
-	indexDesc.bufferSize = sizeof(size_t) * 36;*/
-	indexDesc.stride = sizeof(size_t);
-	indexDesc.numOfEle = indexs.size();
-	indexDesc.data = indexs.data();
-	indexDesc.bufferSize = sizeof(size_t) * indexs.size();
-
-	m_vertexBuffer = createBuffer(vertexDesc);
-	m_indexBuffer = createBuffer(indexDesc);
-
-	m_context3D->setVertexBuffer(m_vertexBuffer);
-	m_context3D->setIndexBuffer(m_indexBuffer);
-}
-
-std::shared_ptr<Buffer> RenderDevice::createBuffer(const BufferDesc& desc)
-{
-	std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(desc);
-	return buffer;
+	m_context3D->draw(m_fragmentBuff, m_depthBuffer);
 }
 
 #pragma region Raster Function

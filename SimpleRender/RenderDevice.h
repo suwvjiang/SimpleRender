@@ -15,11 +15,11 @@ private:
 
 	int winWidth, winHeight;
 
+	size_t m_bufferSize = 0;
 	BYTE* m_fragmentBuff = NULL;
+	float* m_depthBuffer = NULL;
 
 	std::shared_ptr<RenderContext> m_context3D;
-	std::shared_ptr<Buffer> m_vertexBuffer;
-	std::shared_ptr<Buffer> m_indexBuffer;
 	std::shared_ptr<Camera> m_camera;
 
 	Viewport m_viewPort;
@@ -45,17 +45,12 @@ public:
 	void update();
 	void drawcall();
 
-	void initMeshInfo();
-
 	void switchRotateEnable() { m_rotateEnable = !m_rotateEnable; }
 	void switchCameraRotate() { m_rotateCamera = !m_rotateCamera; }
 	void sliderCamera(float delta) { m_radius += delta; }
 	void scaleModel(float scale) { m_scale += scale; }
 
 	bool getCameraRotate() { return m_rotateCamera; }
-
-	std::shared_ptr<Buffer> createBuffer(const BufferDesc& desc);
-
 #pragma region Raster Function
 	void drawPixel(int x, int y);
 	void drawLineDDA(int x0, int y0, int xEnd, int yEnd);

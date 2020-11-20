@@ -3,6 +3,14 @@
 #include "Buffer.h"
 #include "Rasterizer.h"
 #include "Clipper.h"
+#include "TGAImage.h"
+
+struct Material
+{
+	VertexShader vertexShader = NULL;
+	FragmentShader fragmentShader = NULL;
+	TGAImage* mainTexture = nullptr;
+};
 
 class RenderContext
 {
@@ -11,29 +19,48 @@ public:
 	~RenderContext();
 
 	void setViewport(int width, int height, const Viewport& view);
-	Viewport getViewport() const;
+	void initMeshInfo();
+
+	std::shared_ptr<Buffer> createBuffer(const BufferDesc& desc);
 
 	void setVertexBuffer(std::shared_ptr<Buffer> vBuffer);
 	void setIndexBuffer(std::shared_ptr<Buffer> iBuffer);
 
-	void setVertexShader(VertexShader vs);
-	void setFragmentShader(FragmentShader fs);
+	void setLocalPos(const float& x, const float& y, const float& z)
+	{
+		m_offsetX = x;
+		m_offsetY = y;
+		m_offsetZ = z;
+	}
+	//x-y-z
+	void setLocalRotate(const float& x, const float& y, const float& z)
+	{
+		m_eulerX = x;
+		m_eulerY = y;
+		m_eulerZ = z;
+	}
+	void setLocalScale(const float& scale_x, const float& scale_y, const float& scale_z)
+	{
+		m_scaleX = scale_x;
+		m_scaleY = scale_y;
+		m_scaleZ = scale_z;
+	}
+	Matrix4x4f getTransform();
 
-	void clearDepthBuffer();
-	void draw(BYTE* buffer);
+	void draw(BYTE* buffer, float* depthBuffer);
 
 private:
 
 	int m_width, m_height;
-	Viewport m_viewport;
-	VertexShader m_vertexShader;
-	FragmentShader m_fragmentShader;
+	float m_offsetX = 0, m_offsetY = 0, m_offsetZ = 0;
+	float m_eulerX = 0, m_eulerY = 0, m_eulerZ = 0;
+	float m_scaleX = 1, m_scaleY = 1, m_scaleZ = 1;
 
+	Matrix4x4f m_transform;
 	std::shared_ptr<Rasterizer> m_rasterizer;
 	std::shared_ptr<Buffer> m_vertexBuffer;
 	std::shared_ptr<Buffer> m_indexBuffer;
-	float* m_depthBuffer;
-	size_t m_dBufferSize;
+	std::shared_ptr <Material> m_material;
 
 	Fragment* m_tempVertex;
 	Vertex* m_vertexData;

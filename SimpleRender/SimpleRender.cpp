@@ -67,23 +67,6 @@ void initRender()
 	device->initDevice(windowWidth, windowHeight);
 }
 
-//
-void getInputStatus()
-{
-	int key;
-	if (_kbhit())
-	{
-		key = _getch();
-		std::cout << key;
-		
-		switch (key)
-		{
-		default:
-			break;
-		}
-	}
-}
-
 void doRender()
 {
 	device->clear();
@@ -128,7 +111,6 @@ void update()
 		}
 		else
 		{
-			getInputStatus();
 			doRender();
 			showFPS();
 		}
