@@ -201,7 +201,7 @@ public:
 		m_viewPort = viewPort;
 	}
 
-	void rasterize(Triangle& triangle, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
+	void rasterize(Triangle& triangle, std::vector<Fragment>& frag, std::vector<int>& pixels, float* depthBuffer)
 	{
 		float inv_camera_z[3];
 		inv_camera_z[0] = 1 / triangle.vertex[0].pos.w;
@@ -409,7 +409,7 @@ private:
 	}
 
 	void renderInsideBlock(const Triangle& triangle, const float(&inv_camera_z)[3], const int& area, const EdgeEquationSet& set,
-		const int& px, const int& py, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
+		const int& px, const int& py, std::vector<Fragment>& frag, std::vector<int>& pixels, float* depthBuffer)
 	{
 		EdgeEquationSet tempY = set;
 		EdgeEquationSet tempX;
@@ -444,7 +444,7 @@ private:
 				{
 					depthBuffer[index] = depth;
 
-					pixels.emplace_back(Vec2i(i, j));
+					pixels.emplace_back(index);
 
 					Fragment fragDest;
 					BaseInterpolationFunc(triangle.vertex[0], triangle.vertex[1], triangle.vertex[2], param0, param1, param2, fragDest);
@@ -465,7 +465,7 @@ private:
 	}
 
 	void renderIntersetorBlock(const Triangle& triangle, const float(&inv_camera_z)[3], const int& area, const EdgeEquationSet& set,
-		const int& px, const int& py, std::vector<Fragment>& frag, std::vector<Vec2i>& pixels, float* depthBuffer)
+		const int& px, const int& py, std::vector<Fragment>& frag, std::vector<int>& pixels, float* depthBuffer)
 	{
 		EdgeEquationSet tempY = set;
 		EdgeEquationSet tempX;
@@ -501,7 +501,7 @@ private:
 					{
 						depthBuffer[index] = depth;
 
-						pixels.emplace_back(Vec2i(i, j));
+						pixels.emplace_back(index);
 
 						Fragment fragDest;
 						BaseInterpolationFunc(triangle.vertex[0], triangle.vertex[1], triangle.vertex[2], param0, param1, param2, fragDest);

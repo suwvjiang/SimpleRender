@@ -9,7 +9,7 @@ struct Material
 {
 	VertexShader vertexShader = NULL;
 	FragmentShader fragmentShader = NULL;
-	TGAImage* mainTexture = nullptr;
+	std::shared_ptr<TGAImage> mainTexture = nullptr;
 };
 
 class RenderContext
@@ -66,15 +66,15 @@ private:
 	Vertex* m_vertexData;
 	Triangle* m_triangles;
 
-	inline void outputToRenderTarget(const Vec2i& pixel, const Vec3f& color, BYTE* buffer)
+	inline void outputToRenderTarget(const int& pixel, const Vec3f& color, BYTE* buffer)
 	{
 		if (NULL == buffer) return;
-		if (pixel.x < 0 || pixel.y < 0) return;
-		if (pixel.y * m_width * 3 + pixel.x * 3 + 3 > m_width * m_height* PIX_BITS / 8) return;
+		if (pixel < 0) return;
+		if (pixel * 3 + 3 > m_width * m_height* PIX_BITS / 8) return;
 
-		buffer[pixel.y * m_width * 3 + pixel.x * 3 + 1] = color.g*255;
-		buffer[pixel.y * m_width * 3 + pixel.x * 3 + 2] = color.r*255;
-		buffer[pixel.y * m_width * 3 + pixel.x * 3 + 3] = color.b*255;
+		buffer[pixel * 3 + 1] = color.g*255;
+		buffer[pixel * 3 + 2] = color.r*255;
+		buffer[pixel * 3 + 3] = color.b*255;
 	}
 };
 

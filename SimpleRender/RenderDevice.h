@@ -18,6 +18,7 @@ private:
 	size_t m_bufferSize = 0;
 	BYTE* m_fragmentBuff = NULL;
 	float* m_depthBuffer = NULL;
+	Fragment* m_tempFrag = NULL;
 
 	std::shared_ptr<RenderContext> m_context3D;
 	std::shared_ptr<Camera> m_camera;

@@ -208,7 +208,7 @@ void RenderContext::draw(BYTE* buffer, float* depthBuffer)
 	CVVClip(&m_triangles, triangleNum);
 
 	std::vector<Fragment> fragments;
-	std::vector<Vec2i> pixels;
+	std::vector<int> pixels;
 
 	Vec3f* fragmentOut = new Vec3f();
 	for (size_t i = 0; i < triangleNum; ++i)
